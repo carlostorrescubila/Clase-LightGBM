@@ -1,0 +1,260 @@
+---
+title: "Introducción a LightGBM con R"
+author: "Carlos A. Torres Cubilla"
+output:
+  slidy_presentation: 
+    number_sections: false
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+---
+
+```{r setup, include=FALSE}
+library(htmltools)
+library(DiagrammeR)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+# Qué es LightGBM
+
+LightGBM es un framework de *gradient boosting* que utiliza algoritmos de aprendizaje basados en árboles para crear modelos predictivos de manera eficiente y rápida. 
+
+## Ventajas
+
+LightGBM se destaca no solo por su rendimiento predictivo, sino también por su eficiencia computacional. Su adopción generalizada en aplicaciones reales de machine learning se puede explicar mediante cinco ventajas clave.
+
+```{r ventajas, echo=FALSE}
+ventajas_style <- "
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  width: 120px; 
+  transition: transform 0.3s;
+"
+
+tags$div(
+  style = "display: flex; justify-content: center; gap: 40px; margin-top: 20px;",
+
+  tags$div(
+    style = ventajas_style,
+    onmouseover = sprintf("this.style.transform='scale(1.1)'"),
+    onmouseout = sprintf("this.style.transform='scale(1)'"),
+    tags$span(style = "font-size: 40px;", "⚡"),
+    tags$p("Velocidad")
+  ),
+
+  tags$div(
+    style = ventajas_style,
+    onmouseover = sprintf("this.style.transform='scale(1.1)'"),
+    onmouseout = sprintf("this.style.transform='scale(1)'"),
+    tags$span(style = "font-size: 40px;", "💾"),
+    tags$p("Memoria")
+  ),
+
+  tags$div(
+    style = ventajas_style,
+    onmouseover = sprintf("this.style.transform='scale(1.1)'"),
+    onmouseout = sprintf("this.style.transform='scale(1)'"),
+    tags$span(style = "font-size: 40px;", "🎯"),
+    tags$p("Precisión")
+  ),
+
+  tags$div(
+    style = "display: flex; flex-direction: column; align-items: center; width: 120px; transition: transform 0.3s;",
+    onmouseover = sprintf("this.style.transform='scale(1.1)'"),
+    onmouseout = sprintf("this.style.transform='scale(1)'"),
+    tags$span(style = "font-size: 40px;", "🖥️"),
+    tags$p("Paralelismo")
+  ),
+
+  tags$div(
+    style = ventajas_style,
+    onmouseover = sprintf("this.style.transform='scale(1.1)'"),
+    onmouseout = sprintf("this.style.transform='scale(1)'"),
+    tags$span(style = "font-size: 40px;", "📊"),
+    tags$p("Escalabilidad")
+  )
+)
+```
+
+<div style="margin: 0 auto; width: fit-content;">
+| Ventaja       | Descripción                                                                 |
+|---------------|------------------------------------------------------------------------------|
+| Velocidad   | Entrena modelos rápidamente, lo que lo hace ideal para proyectos con grandes volúmenes de datos. |
+| Memoria     | Optimiza el consumo de memoria, permitiendo trabajar con datasets grandes sin requerir tanta RAM.         |
+| Precisión   | Proporciona resultados precisos y competitivos en tareas de predicción.                    |
+|  Paralelismo | Aprovecha múltiples núcleos, clústeres y aceleración por GPU para entrenamientos más rápidos.            |
+| Escalabilidad | Maneja grandes volúmenes de datos sin pérdida de rendimiento.       |
+</div>
+
+## Uso
+
+LightGBM es  altamente versátil que permite resolver una amplia variedad de problemas, desde tareas tradicionales como clasificación y regresión, hasta aplicaciones más complejas como ranking, detección de fraude y sistemas de recomendación personalizados. Esto lo convierte en una herramienta poderosa y escalable para proyectos de aprendizaje automático en entornos reales.
+
+```{r uso, echo=FALSE}
+browsable(
+  tags$div(
+    style = "
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: transparent;
+    ",
+    tags$style(HTML("
+      /* Reset total de margenes/paddings en Slidy */
+      body, html, .slide, .content {
+        margin: 0 !important;
+        padding: 0 !important;
+        height: 0% !important;
+      }
+
+      /* El SVG generado por DiagrammeR */
+      svg {
+        display: block;
+        margin: 0;
+        padding: 0;
+        height: auto;
+        width: 0;
+        max-height: 30vh;
+      }
+
+      .grViz {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0 !important;
+        margin: 0 !important;
+        height: auto;
+        width: 0;
+        max-height: 30vh;
+      }
+      }
+    ")),
+    grViz("
+      digraph lightgbm {
+        graph [rankdir = TB, margin=0, nodesep=0.3, ranksep=0.3]
+        node [shape = box, style = filled, fillcolor = LightGray, fontsize = 12, margin=0.05]
+
+        Usos [label = '¿Para qué se usa?', shape=box, fillcolor=lightblue]
+        Clasificacion [label = 'Clasificación']
+        Regresion [label = 'Regresión']
+        Ranking [label = 'Ranking']
+        DeteccionFraude [label = 'Detección de\\nfraude']
+        Recomendacion [label = 'Sistemas de\\nrecomendación']
+
+        Usos -> Clasificacion
+        Usos -> Regresion
+        Usos -> Ranking
+        Usos -> DeteccionFraude
+        Usos -> Recomendacion
+      }
+    ")
+  )
+)
+```
+
+Muchísimas empresas en todo el mundo utilizan LightGBM debido a su velocidad y precisión para resolver distintos problemas de machine learning. Algunos ejemplos de compañías líderes que han implementado LightGBM en sus soluciones para estos casos de uso:
+
+```{r empresas, echo=FALSE}
+html <- tags$div(
+  # Estilo del contenedor general
+  style = "display: flex; justify-content: center; flex-wrap: wrap; gap: 40px; margin-top: 20px;",
+  
+  # Estilo para flip cards
+  tags$style(HTML("
+    .flip-card {
+      background-color: transparent;
+      width: 175px;
+      height: 250px;
+      perspective: 1000px;
+    }
+
+    .flip-card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 0.6s ease;
+      transform-origin: center center;
+    }
+
+    .flip-card:hover .flip-card-inner {
+      transform: rotateY(180deg);
+    }
+
+    .flip-card-front, .flip-card-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      box-sizing: border-box;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .flip-card-front {
+      background: white;
+    }
+
+    .flip-card-back {
+      background-color: #f0f0f0;
+      transform: rotateY(180deg);
+      font-size: 0.75em;
+    }
+
+    .flip-card img {
+      width: 90px;
+      height: auto;
+      margin-bottom: 10px;
+    }
+    
+  ")),
+
+  # Contenido de las tarjetas
+  lapply(list(
+    list(nombre = "Microsoft", uso = "Clasificación", logo = "https://upload.wikimedia.org/wikipedia/commons/9/96/Microsoft_logo_%282012%29.svg", detalle = "Categorizar correos y detectar spam"),
+    list(nombre = "Uber", uso = "Regresión", logo = "https://upload.wikimedia.org/wikipedia/commons/5/58/Uber_logo_2018.svg", detalle = "Estimar demanda y tiempos de llegada"),
+    list(nombre = "LinkedIn", uso = "Ranking", logo = "https://upload.wikimedia.org/wikipedia/commons/a/aa/LinkedIn_2021.svg", detalle = "Ordenar resultados de búsqueda y recomendaciones de empleo"),
+    list(nombre = "PayPal", uso = "Detección de fraude", logo = "https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg", detalle = "Detectar transacciones sospechosas en tiempo real"),
+    list(nombre = "Netflix", uso = "Sistemas de recomendación", logo = "https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg", detalle = "Personalizar sugerencias de contenido")
+  ), function(e) {
+    tags$div(class = "flip-card",
+      tags$div(class = "flip-card-inner",
+        tags$div(class = "flip-card-front",
+          tags$img(src = e$logo),
+          tags$p(e$uso, style = "color: gray; font-size: 0.85em;")
+        ),
+        tags$div(class = "flip-card-back",
+          tags$strong(e$nombre),
+          tags$p(e$detalle)
+        )
+      )
+    )
+  })
+)
+
+browsable(html)
+```
+
+
+# Instalación
+
+```{r instalacion}
+# Instalar solo si no están instalados
+# install.packages("lightgbm", repos = "https://cran.r-project.org")
+# install.packages("Matrix")
+# install.packages("data.table")
+
+library(lightgbm)
+library(Matrix)
+library(data.table)
+
+```
