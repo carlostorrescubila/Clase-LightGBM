@@ -16,11 +16,50 @@ library(DiagrammeR)
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```
 
-# Qué es LightGBM
+# ¿Qué es LightGBM?
 
 LightGBM es un framework de *gradient boosting* que utiliza algoritmos de aprendizaje basados en árboles para crear modelos predictivos de manera eficiente y rápida. 
 
-## Ventajas
+## ¿Que significa LightGBM?
+
+- 🔦 **Light** = ligero, rápido, optimizado
+  - Se refiere a que es una versión optimizada del algoritmo de Gradient Boosting.
+  - Está diseñado para consumir menos memoria y funcionar más rápido que alternativas como XGBoost o Random Forests.
+- 📈 **GBM** = Gradient Boosting Machine
+  - Un tipo de técnica de ensemble learning que genera muchos modelos débiles (generalmente árboles de decisión) de forma secuencial, donde cada modelo aprende de los errores de sus predecesores para crear un modelo fuerte .
+  - Se basa en usar el gradiente del error para mejorar paso a paso.
+
+<div style="text-align: center;">
+  <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiN2KPoea9rFZo4nb0SZKrBrEUjNv-xaqB7gF6Htl5lY5AtOmKH1yFalD9Y6XHNNgtUYqsJCPUr-7a4MJIvdcubXogxerrskVqKfQGhKSpUyrnroLhEi6P5vMXqYE22J3_dnLRuWiBv5Nw/s0/Random+Forest+03.gif" style="display: block; margin-left: auto; margin-right: auto;" width="75%"/>
+</div>
+
+<div class="gradient-boosting" style="background-color: #f9f9f9; border-left: 5px solid #007ACC; padding: 10px; margin-top: 0px;">
+  LightGBM mejora los errores paso a paso combinando árboles de decisión pequeños.
+</div>
+
+## ¿Quién creó LightGBM?
+
+<div style="display: flex; align-items: center; gap: 1rem;">
+  <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" 
+       alt="Microsoft Logo" 
+       style="height: 50px; margin-bottom: 0;" />
+
+<div>
+  <p style="margin: 0;">
+    Desarrollado por <strong>Microsoft Research Asia</strong>  
+    como parte del toolkit <strong>DMTK</strong> (Distributed Machine Learning Toolkit).
+  </p>
+  <p style="margin: 0;">
+    Lanzado en <strong>2016</strong> como proyecto <em>open source</em>.
+  </p>
+</div>
+</div>
+
+> <em>"Creamos LightGBM para resolver problemas del mundo real a gran escala con eficiencia."</em>  
+> — <strong>Microsoft DMTK Team</strong>
+
+
+# ¿Por qué utilizar LightGBM?
 
 LightGBM se destaca no solo por su rendimiento predictivo, sino también por su eficiencia computacional. Su adopción generalizada en aplicaciones reales de machine learning se puede explicar mediante cinco ventajas clave.
 
@@ -243,7 +282,6 @@ html <- tags$div(
 
 browsable(html)
 ```
-
 
 # Instalación
 
