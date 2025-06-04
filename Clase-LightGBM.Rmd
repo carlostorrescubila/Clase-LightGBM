@@ -25,7 +25,7 @@ LightGBM es un framework de *gradient boosting* que utiliza algoritmos de aprend
 - 🔦 **Light** = ligero, rápido, optimizado
   - Se refiere a que es una versión optimizada del algoritmo de Gradient Boosting.
   - Está diseñado para consumir menos memoria y funcionar más rápido que alternativas como XGBoost o Random Forests.
-- 📈 **GBM** = Gradient Boosting Machine
+- 📈 **GBM** = *Gradient Boosting Machine*
   - Un tipo de técnica de ensemble learning que genera muchos modelos débiles (generalmente árboles de decisión) de forma secuencial, donde cada modelo aprende de los errores de sus predecesores para crear un modelo fuerte .
   - Se basa en usar el gradiente del error para mejorar paso a paso.
 
@@ -40,14 +40,14 @@ LightGBM es un framework de *gradient boosting* que utiliza algoritmos de aprend
 ## ¿Quién creó LightGBM?
 
 <div style="display: flex; align-items: center; gap: 1rem;">
-  <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" 
+  <img src="https://upload.wikimedia.org/wikipedia/commons/9/96/Microsoft_logo_%282012%29.svg" 
        alt="Microsoft Logo" 
        style="height: 50px; margin-bottom: 0;" />
 
 <div>
   <p style="margin: 0;">
     Desarrollado por <strong>Microsoft Research Asia</strong>  
-    como parte del toolkit <strong>DMTK</strong> (Distributed Machine Learning Toolkit).
+    como parte del toolkit <strong>DMTK</strong> (*Distributed Machine Learning Toolkit*).
   </p>
   <p style="margin: 0;">
     Lanzado en <strong>2016</strong> como proyecto <em>open source</em>.
@@ -58,10 +58,60 @@ LightGBM es un framework de *gradient boosting* que utiliza algoritmos de aprend
 > <em>"Creamos LightGBM para resolver problemas del mundo real a gran escala con eficiencia."</em>  
 > — <strong>Microsoft DMTK Team</strong>
 
+# ¿Qué es Gradient Boosting?
 
-# ¿Por qué utilizar LightGBM?
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(lightgbm)
+library(ggplot2)
+library(dplyr)
+
+# Datos simulados
+set.seed(123)
+n <- 300
+x <- runif(n, 0, 10)
+y <- sin(x) + rnorm(n, 0, 0.3)
+data <- data.frame(x = x, y = y)
+
+# Dataset para LightGBM
+X_mat <- matrix(x, ncol = 1)
+dtrain <- lgb.Dataset(data = X_mat, label = y)
+
+# Modelo completo con 10 iteraciones
+params <- list(
+  objective = "regression",
+  learning_rate = 0.3,
+  num_leaves = 4,
+  max_depth = 2,
+  verbosity = -1
+)
+model <- lgb.train(params, dtrain, nrounds = 10)
+
+# Predicciones paso a paso
+predictions <- lapply(1:10, function(i) {
+  data.frame(
+    x = x,
+    y_pred = predict(model, X_mat, num_iteration = i),
+    paso = paste("Paso", i)
+  )
+}) %>% bind_rows()
+
+# Visualización
+ggplot(predictions, aes(x = x, y = y_pred)) +
+  geom_line(color = "blue", alpha = 0.7) +
+  geom_point(data = data, aes(x = x, y = y), alpha = 0.2) +
+  facet_wrap(~ paso, ncol = 5) +
+  theme_minimal(base_size = 12) +
+  labs(title = "Gradient Boosting: Mejora paso a paso", x = "x", y = "Predicción")
+```
+
+# Ventajas y desventajas
 
 LightGBM se destaca no solo por su rendimiento predictivo, sino también por su eficiencia computacional. Su adopción generalizada en aplicaciones reales de machine learning se puede explicar mediante cinco ventajas clave.
+
+## Ventajas
 
 ```{r ventajas, echo=FALSE}
 ventajas_style <- "
@@ -120,14 +170,82 @@ tags$div(
 <div style="margin: 0 auto; width: fit-content;">
 | Ventaja       | Descripción                                                                 |
 |---------------|------------------------------------------------------------------------------|
-| Velocidad   | Entrena modelos rápidamente, lo que lo hace ideal para proyectos con grandes volúmenes de datos. |
-| Memoria     | Optimiza el consumo de memoria, permitiendo trabajar con datasets grandes sin requerir tanta RAM.         |
-| Precisión   | Proporciona resultados precisos y competitivos en tareas de predicción.                    |
-|  Paralelismo | Aprovecha múltiples núcleos, clústeres y aceleración por GPU para entrenamientos más rápidos.            |
-| Escalabilidad | Maneja grandes volúmenes de datos sin pérdida de rendimiento.       |
+| Velocidad   | Entrena modelos rápidamente, lo que lo hace ideal para proyectos con grandes volúmenes de datos |
+| Memoria     | Optimiza el consumo de memoria, permitiendo trabajar con datasets grandes sin requerir tanta RAM         |
+| Precisión   | Proporciona resultados precisos y competitivos en tareas de predicción                    |
+|  Paralelismo | Aprovecha múltiples núcleos, clústeres y aceleración por GPU para entrenamientos más rápidos            |
+| Escalabilidad | Maneja grandes volúmenes de datos sin pérdida de rendimiento       |
 </div>
 
-## Uso
+## Desventajas
+
+```{r desventajas, echo=FALSE}
+desventajas_style <- "
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  width: 130px; 
+  transition: transform 0.3s;
+"
+
+tags$div(
+  style = "display: flex; justify-content: center; flex-wrap: wrap; gap: 40px; margin-top: 20px;",
+
+  tags$div(
+    style = desventajas_style,
+    onmouseover = "this.style.transform='scale(1.1)'",
+    onmouseout = "this.style.transform='scale(1)'",
+    tags$span(style = "font-size: 40px;", "⚠️"),
+    tags$p("Overfitting")
+  ),
+
+  tags$div(
+    style = desventajas_style,
+    onmouseover = "this.style.transform='scale(1.1)'",
+    onmouseout = "this.style.transform='scale(1)'",
+    tags$span(style = "font-size: 40px;", "🔍"),
+    tags$p("Difícil de interpretar")
+  ),
+
+  tags$div(
+    style = desventajas_style,
+    onmouseover = "this.style.transform='scale(1.1)'",
+    onmouseout = "this.style.transform='scale(1)'",
+    tags$span(style = "font-size: 40px;", "📉"),
+    tags$p("Problemas en datasets pequeños")
+  ),
+
+  tags$div(
+    style = desventajas_style,
+    onmouseover = "this.style.transform='scale(1.1)'",
+    onmouseout = "this.style.transform='scale(1)'",
+    tags$span(style = "font-size: 40px;", "🧠"),
+    tags$p("Curva de aprendizaje")
+  ),
+
+  tags$div(
+    style = desventajas_style,
+    onmouseover = "this.style.transform='scale(1.1)'",
+    onmouseout = "this.style.transform='scale(1)'",
+    tags$span(style = "font-size: 40px;", "🔌"),
+    tags$p("Soporte parcial en entornos")
+  )
+)
+```
+
+<div style="margin: 0 auto; width: fit-content;">
+| ⚠️ Desventaja                | 📝 Descripción                                                                 |
+|-----------------------------|--------------------------------------------------------------------------------|
+| Overfitting                 | Al ser muy poderoso, puede memorizar ruido si no se ajusta correctamente.      |
+| Difícil de interpretar      | Es una "caja negra" frente a modelos más simples como regresión lineal.        |
+| Problemas en datasets pequeños | Modelos simples pueden generalizar mejor en conjuntos de datos chicos.          |
+| Curva de aprendizaje        | Muchos hiperparámetros que requieren experiencia para ajustar bien.            |
+| Soporte parcial en entornos | APIs disponibles, pero algunas integraciones pueden ser limitadas o inestables. |
+</div>
+
+
+
+# ¿Para qué utilizar LightGBM?
 
 LightGBM es  altamente versátil que permite resolver una amplia variedad de problemas, desde tareas tradicionales como clasificación y regresión, hasta aplicaciones más complejas como ranking, detección de fraude y sistemas de recomendación personalizados. Esto lo convierte en una herramienta poderosa y escalable para proyectos de aprendizaje automático en entornos reales.
 
@@ -261,7 +379,7 @@ html <- tags$div(
   lapply(list(
     list(nombre = "Microsoft", uso = "Clasificación", logo = "https://upload.wikimedia.org/wikipedia/commons/9/96/Microsoft_logo_%282012%29.svg", detalle = "Categorizar correos y detectar spam"),
     list(nombre = "Uber", uso = "Regresión", logo = "https://upload.wikimedia.org/wikipedia/commons/5/58/Uber_logo_2018.svg", detalle = "Estimar demanda y tiempos de llegada"),
-    list(nombre = "LinkedIn", uso = "Ranking", logo = "https://upload.wikimedia.org/wikipedia/commons/a/aa/LinkedIn_2021.svg", detalle = "Ordenar resultados de búsqueda y recomendaciones de empleo"),
+    list(nombre = "LinkedIn", uso = "Ranking", logo = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/LinkedIn_2021.svg/2560px-LinkedIn_2021.svg.png", detalle = "Ordenar resultados de búsqueda y recomendaciones de empleo"),
     list(nombre = "PayPal", uso = "Detección de fraude", logo = "https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg", detalle = "Detectar transacciones sospechosas en tiempo real"),
     list(nombre = "Netflix", uso = "Sistemas de recomendación", logo = "https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg", detalle = "Personalizar sugerencias de contenido")
   ), function(e) {
