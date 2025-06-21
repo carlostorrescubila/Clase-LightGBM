@@ -13,7 +13,12 @@ output:
 ```{r setup, include=FALSE}
 library(htmltools)
 library(DiagrammeR)
-knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  message = FALSE, 
+  warning = FALSE,
+  fig.align='center'
+)
 ```
 
 # ¿Qué es LightGBM?
@@ -58,10 +63,120 @@ LightGBM es un framework de *gradient boosting* que utiliza algoritmos de aprend
 > <em>"Creamos LightGBM para resolver problemas del mundo real a gran escala con eficiencia."</em>  
 > — <strong>Microsoft DMTK Team</strong>
 
-# ¿Qué es Gradient Boosting?
+# ¿Cómo funciona el Gradient Boosting?
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+Podemos resumir el funcionamiento del *Gradient Boosting* en los siguientes 5 pasos: 
 
+```{r boosting_paso_a_paso, echo=FALSE}
+step_style <- "
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 160px;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+  transition: transform 0.3s;
+"
+
+steps <- tagList(
+  tags$div(
+    style = step_style,
+    tags$span(style = "font-size: 30px;", "📅"),
+    tags$strong("1. Predicción Inicial"),
+    tags$p("Promedio de la variable objetivo o log-odds si es clasificación.")
+  ),
+  tags$div(
+    style = step_style,
+    tags$span(style = "font-size: 30px;", "📈"),
+    tags$strong("2. Cálculo de Error"),
+    tags$p("Se calcula la diferencia entre la predicción y el valor real.")
+  ),
+  tags$div(
+    style = step_style,
+    tags$span(style = "font-size: 30px;", "🌳"),
+    tags$strong("3. Nuevo árbol"),
+    tags$p("Se entrena un árbol sobre los errores residuales (gradientes).")
+  ),
+  tags$div(
+    style = step_style,
+    tags$span(style = "font-size: 30px;", "⚖️"),
+    tags$strong("4. Ponderar"),
+    tags$p("Se multiplica por el learning rate para suavizar el ajuste.")
+  ),
+  tags$div(
+    style = step_style,
+    tags$span(style = "font-size: 30px;", "➕"),
+    tags$strong("5. Sumar"),
+    tags$p("Se agrega el árbol al modelo existente.")
+  )
+)
+
+tags$div(
+  style = "display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 20px;",
+  steps
+)
+```
+
+
+🔄 El proceso se repite muchas veces, agregando un árbol nuevo en cada paso, hasta que se alcanza el número máximo de rondas (nrounds) o se activa un criterio de parada temprana (early_stopping_rounds) si el rendimiento en el conjunto de validación deja de mejorar.
+
+<center>
+  <img src="https://media.geeksforgeeks.org/wp-content/uploads/20250519125344578128/python.webp" width="800" />
+</center>
+
+Estos pasos se pueden expresar de manera matemática de manera facil
+
+### Paso 1: Predicción Inicial
+
+El modelo comienza con una predicción constante para todos los datos.
+
+- En regresión, suele ser: \(F_0(x) = \bar{y} \)
+
+- En clasificación binaria, suele ser: \( F_0(x) = \log\left(\frac{p}{1 - p}\right), \quad p = \frac{\text{# de clase 1}}{n} \)
+
+### Paso 2: Calcular el Error o Gradiente
+
+Para cada observación, se calcula cuánto se está equivocando el modelo actual:
+
+\( g_i^{1} = y_i - F_{0}(x_i) \)
+
+Este paso corresponde al cálculo del gradiente de la función de pérdida con respecto a la predicción actual.
+
+### Paso 3: Entrenar un nuevo modelo sobre ese error
+
+Se entrena un modelo débil que aprenda a corregir esos errores: \( h_1(x) \approx g_i^{1} \)
+
+### Paso 4: Escalar la corrección con un Learning Rate
+Se ajusta la magnitud de la corrección aplicando un factor de aprendizaje \( \eta \) (por ejemplo, 0.1):
+
+\( \text{corrección} = \eta \cdot h_1(x) \)
+
+Esto suaviza el aprendizaje y previene el sobreajuste.
+
+### Paso 5: Actualizar el modelo
+
+Se suma la corrección al modelo acumulado anterior:
+
+\( F_m(x) = F_0(x) + \eta \cdot h_1(x) \)
+
+Este proceso se repite durante varias iteraciones, agregando un nuevo modelo débil \( h(x) \) cada vez, hasta alcanzar un número máximo de rondas (*nrounds*) o un criterio de parada temprana (*early_stopping_rounds*)
+
+### Resultado final
+
+La predicción final del modelo se puede representar mediante la siguiente función:
+
+\( F_m(x) = F_0(x) + \sum_{m=1}^M \eta \cdot h_m(x)\)
+
+Donde: 
+
+- \( F_m(x) \): predicción final,
+- \( \eta \): learning rate,
+- \( h_m(x) \): modelo débil,
+- \( M \): número total de iteraciones.
+
+En la siguiente imagen se representa visualmente el proceso de mejora paso a paso de un modelo basado en *Gradien Boosting*. 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 library(lightgbm)
@@ -87,10 +202,10 @@ params <- list(
   max_depth = 2,
   verbosity = -1
 )
-model <- lgb.train(params, dtrain, nrounds = 10)
+model <- lgb.train(params, dtrain, nrounds = 12)
 
 # Predicciones paso a paso
-predictions <- lapply(1:10, function(i) {
+predictions <- lapply(1:12, function(i) {
   data.frame(
     x = x,
     y_pred = predict(model, X_mat, num_iteration = i),
@@ -98,14 +213,20 @@ predictions <- lapply(1:10, function(i) {
   )
 }) %>% bind_rows()
 
+# Convertir a factor con niveles ordenados
+predictions$paso <- factor(predictions$paso, levels = paste("Paso", 1:12))
+
 # Visualización
 ggplot(predictions, aes(x = x, y = y_pred)) +
   geom_line(color = "blue", alpha = 0.7) +
   geom_point(data = data, aes(x = x, y = y), alpha = 0.2) +
-  facet_wrap(~ paso, ncol = 5) +
+  facet_wrap(~ paso, ncol = 4) +
   theme_minimal(base_size = 12) +
-  labs(title = "Gradient Boosting: Mejora paso a paso", x = "x", y = "Predicción")
+  labs(title = "Gradient Boosting: Mejora paso a paso", x = "x", y = "Predicción") +
+  theme(plot.title = element_text(hjust = 0.5)) 
 ```
+
+Cada iteración mejora el modelo poco a poco, corrigiendo errores anteriores.
 
 # Ventajas y desventajas
 
@@ -400,6 +521,8 @@ html <- tags$div(
 
 browsable(html)
 ```
+
+# Parámetros de LightGBM
 
 # Instalación
 
