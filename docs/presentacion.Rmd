@@ -524,6 +524,54 @@ browsable(html)
 
 # Parámetros de LightGBM
 
+Cuando entrenamos un modelo con lightgbm, necesitamos decirle cómo aprender. Los parámetros del modelo le indican a LightGBM como y que tanto aprender. Para una información más completa de los parámetros de LightGBM visitar la [documentación oficial en R](https://lightgbm.readthedocs.io/en/latest/R/index.html).
+
+Los principales parámetros que debemos conocoer son:
+
+#### 1. objective
+
+Especifica la función de pérdida que se optimizará durante el entrenamiento. Qué tipo de problema estás resolviendo. Los principales valores de este parámetro son:
+
+- `"regression"` → si es un valor numérico continuo
+
+- `"binary"` → si es una clasificación con dos clases
+
+- `"multiclass"` → si hay más de dos clases
+
+#### 2. metric
+
+Es la métrica principal que utilizará el modelo para medir si el modelo está aprendiendo bien.
+
+Ejemplos:
+
+- `"rmse"` → error cuadrático medio (regresión)
+
+- `"binary_logloss"` → para clasificación binaria
+
+- `"multi_logloss"` → clasificación múltiple
+
+#### 3. num_leaves
+
+Determina el tamaño del árbol de decisión. Más hojas significa más complejidad, pero también más riesgo de sobreajuste. recomienda empezar con 31 o menos.
+
+#### 4. learning_rate
+
+Controla cuánto cambia el modelo en cada iteración. Mientras más bajo la convergencia es más lenta, pero más precisa. Se recomienda empezar con 0.1 o incluso 0.05.
+
+#### 5. max_depth
+
+Indica cuán profundo pueden ser los árboles. Es muy útil para limitar la complejidad.
+
+#### 6. early_stopping_round
+
+Detiene el entrenamiento si no mejora en cierto número de iteraciones.
+
+#### 7. nrounds
+
+Número total de iteraciones (árboles) que se van a construir.Este parámetro va fuera de params
+
+Se usa en validación con lgb.cv() o lgb.train() si hay conjunto de validación.
+
 # Instalación
 
 ```{r instalacion}
