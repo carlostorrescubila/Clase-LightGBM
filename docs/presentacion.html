@@ -2695,6 +2695,40 @@ hojas, más complejo y flexible puede ser el árbol.</p>
 individual. Si se reduce, se evita que los árboles se vuelvan demasiado
 complejos. Un valor de -1, LightGBM decide por su cuenta (crece hasta
 donde haga falta).</p>
+<div style="
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: transparent;
+    ">
+<style>
+body, html, .slide, .content {
+margin: 0 !important;
+padding: 0 !important;
+height: 0% !important;
+}
+svg {
+display: block;
+margin: 0;
+padding: 0;
+height: auto;
+width: 100%;
+max-height: 50vh;
+}
+.grViz {
+display: flex;
+justify-content: center;
+align-items: center;
+padding: 0 !important;
+margin: 0 !important;
+height: auto;
+width: 100%;
+max-height: 50vh;
+}
+</style>
+<div class="grViz html-widget html-fill-item" id="htmlwidget-ff5cd684579f580a49ce" style="width:960px;height:500px;"></div>
+<script type="application/json" data-for="htmlwidget-ff5cd684579f580a49ce">{"x":{"diagram":"\n      digraph tree {\n        graph [rankdir = TB, margin=0, nodesep=0.6, ranksep=0.6]\n\n        node [shape = box, style = filled, color = none, fontname = Helvetica, fontsize = 13,\n              margin = 0.15, fillcolor = \"#fefce8\"]\n\n        edge [arrowhead = vee, color = gray60]\n\n        X1 [label = \"🧠 X1 < 5\", fillcolor = \"#dbeafe\"]\n        X2 [label = \"🧠 X2 < 3\"]\n        X3 [label = \"🧠 X3 < 7\"]\n        X4 [label = \"🧠 X4 < 2\"]\n        Leaf1 [label = \"🍃 Leaf\", fillcolor = \"#dcfce7\"]\n        Leaf2 [label = \"🍃 Leaf\", fillcolor = \"#dcfce7\"]\n        Leaf3 [label = \"🍃 Leaf\", fillcolor = \"#dcfce7\"]\n        Leaf4 [label = \"🍃 Leaf\", fillcolor = \"#dcfce7\"]\n        Leaf5 [label = \"🍃 Leaf\", fillcolor = \"#dcfce7\"]\n\n        Nivel0 [label = \"🟦 Nivel 0\", shape = plaintext, fontcolor = \"#4b5563\", fontsize = 12]\n        Nivel1 [label = \"🟩 Nivel 1\", shape = plaintext, fontcolor = \"#4b5563\", fontsize = 12]\n        Nivel2 [label = \"🟨 Nivel 2\", shape = plaintext, fontcolor = \"#4b5563\", fontsize = 12]\n        Nivel3 [label = \"🟧 Nivel 3\", shape = plaintext, fontcolor = \"#4b5563\", fontsize = 12]\n\n        {rank = same; Nivel0; X1}\n        {rank = same; Nivel1; X2; X3}\n        {rank = same; Nivel2; Leaf1; Leaf2; X4; Leaf5}\n        {rank = same; Nivel3; Leaf3; Leaf4}\n\n        X1 -> X2\n        X1 -> X3\n        X2 -> Leaf1\n        X2 -> Leaf2\n        X3 -> X4\n        X3 -> Leaf5\n        X4 -> Leaf3\n        X4 -> Leaf4\n      }\n    ","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
+</div>
 <h3 id="min_data_in_leaf">3. <code>min_data_in_leaf</code></h3>
 <p>Indica la mínima cantidad de observaciones (filas) que debe tener
 cada hoja en un árbol. Una hoja es un grupo final de datos al que el
@@ -2793,8 +2827,7 @@ lgb.train() si hay conjunto de validación.</p>
 </table>
 <div style="background: #ecfdf5; border-left: 6px solid #10b981; padding: 10px; border-radius: 6px; line-height: 1.5; font-size: 22px; margin: auto;">
 <strong style="color:#047857;">✅ Tip importante:</strong><br>
-<p>📉 Usá <strong>validación temprana</strong> (<em>early stopping</em>) para evitar entrenar de más.</p>
-<p>Esto detiene el entrenamiento cuando el modelo <strong>deja de mejorar</strong> sobre un conjunto de validación.</p>
+<p>📉 Usá (<em>early stopping</em>) para evitar entrenar de más. Esto detiene el entrenamiento cuando el modelo <strong>deja de mejorar</strong> sobre un conjunto de validación.</p>
 </div>
 </div>
 <div id="parámetros-de-lightgbm-iv" class="slide section level1">
@@ -2893,12 +2926,59 @@ extremas, ayudandon así a la estabilidad del modelo.</p>
 <h1>Instalación</h1>
 <p>LightGBM está disponible en CRAN y puede instalarse con el siguiente
 código R.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;lightgbm&quot;</span>, <span class="at">repos =</span> <span class="st">&quot;https://cran.r-project.org&quot;</span>)</span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(lightgbm)</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;lightgbm&quot;</span>, <span class="at">repos =</span> <span class="st">&quot;https://cran.r-project.org&quot;</span>)</span></code></pre></div>
 <p>Cada versión del paquete que ha estado en CRAN también está
 disponible en los <a href="https://github.com/microsoft/LightGBM/releases">LightGBM
 releases</a>, con un formato de nombre
 lightgbm-{VERSION}-r-cran.tar.gz</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>devtools<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&quot;microsoft/LightGBM&quot;</span>, <span class="at">subdir =</span> <span class="st">&quot;R-package&quot;</span>)</span></code></pre></div>
+</div>
+<div id="ejemplo-librerías" class="slide section level1">
+<h1>Ejemplo: librerías</h1>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="fu">library</span>(fastDummies)</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="fu">library</span>(lightgbm)</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="fu">library</span>(pROC)</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span></code></pre></div>
+</div>
+<div id="ejemplo-lecturea-de-datos" class="slide section level1">
+<h1>Ejemplo: lecturea de datos</h1>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>train_values <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">&quot;data/train_values.csv&quot;</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>train_labels <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">&quot;data/train_labels.csv&quot;</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>test_values <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">&quot;data/test_values.csv&quot;</span>)</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>test_labels <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">&quot;data/test_labels.csv&quot;</span>)</span></code></pre></div>
+</div>
+<div id="ejemplo-preprocessing" class="slide section level1">
+<h1>Ejemplo: preprocessing</h1>
+<h2 id="preparación-de-las-features-de-entrenamiento">Preparación de las
+features de entrenamiento</h2>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>X_train <span class="ot">&lt;-</span> train_values <span class="sc">|&gt;</span> </span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>patient_id) <span class="sc">|&gt;</span>             <span class="co"># Se elimina la columna ID ya que no aporta info</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">thal =</span> <span class="fu">as.factor</span>(thal)) <span class="sc">|&gt;</span>  <span class="co"># Convertimos &#39;thal&#39; a factor (categórica)</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="fu">dummy_cols</span>(</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>    <span class="at">select_columns =</span> <span class="st">&quot;thal&quot;</span>,</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>    <span class="at">remove_selected_columns =</span> <span class="cn">TRUE</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>  ) <span class="sc">|&gt;</span>                               <span class="co"># Creamos columnas dummy para &#39;thal&#39;</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>  <span class="fu">as.matrix</span>()                        <span class="co"># Convertimos el data frame a matriz</span></span></code></pre></div>
+<h2 id="preparación-de-la-variable-objetivo-o-target">Preparación de la
+variable objetivo o target</h2>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>y_train <span class="ot">&lt;-</span> train_labels <span class="sc">|&gt;</span> <span class="fu">select</span>(heart_disease_present) <span class="sc">|&gt;</span> <span class="fu">as.matrix</span>()</span></code></pre></div>
+<h2 id="se-repite-el-proceso-para-el-conjunto-de-validación">Se repite
+el proceso para el conjunto de validación</h2>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>X_test <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  test_values <span class="sc">|&gt;</span> </span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>patient_id) <span class="sc">|&gt;</span> </span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">thal =</span> <span class="fu">as.factor</span>(thal)) <span class="sc">|&gt;</span> </span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  <span class="fu">dummy_cols</span>(<span class="at">select_columns =</span> <span class="st">&quot;thal&quot;</span>, <span class="at">remove_selected_columns =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>)</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>y_test <span class="ot">&lt;-</span> test_labels <span class="sc">|&gt;</span> </span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>  <span class="fu">select</span>(heart_disease_present) <span class="sc">|&gt;</span> </span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>  <span class="fu">as.matrix</span>()</span></code></pre></div>
+</div>
+<div id="ejemplo-análisis-exploratorio-de-datos-eda" class="slide section level1">
+<h1>Ejemplo: Análisis exploratorio de datos (EDA)</h1>
 </div>
 
   <!-- dynamically load mathjax for compatibility with self-contained -->

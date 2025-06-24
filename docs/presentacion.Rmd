@@ -747,6 +747,89 @@ div(
 
 Controla cuántos niveles de decisiones puede tener un árbol individual. Si se reduce, se evita que los árboles se vuelvan demasiado complejos. Un valor de -1, LightGBM decide por su cuenta (crece hasta donde haga falta).
 
+```{r, echo=FALSE}
+library(DiagrammeR)
+library(htmltools)
+
+browsable(
+  tags$div(
+    style = "
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: transparent;
+    ",
+    tags$style(HTML("
+      body, html, .slide, .content {
+        margin: 0 !important;
+        padding: 0 !important;
+        height: 0% !important;
+      }
+
+      svg {
+        display: block;
+        margin: 0;
+        padding: 0;
+        height: auto;
+        width: 100%;
+        max-height: 50vh;
+      }
+
+      .grViz {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0 !important;
+        margin: 0 !important;
+        height: auto;
+        width: 100%;
+        max-height: 50vh;
+      }
+    ")),
+    grViz("
+      digraph tree {
+        graph [rankdir = TB, margin=0, nodesep=0.6, ranksep=0.6]
+
+        node [shape = box, style = filled, color = none, fontname = Helvetica, fontsize = 13,
+              margin = 0.15, fillcolor = '#fefce8']
+
+        edge [arrowhead = vee, color = gray60]
+
+        X1 [label = '🧠 X1 < 5', fillcolor = '#dbeafe']
+        X2 [label = '🧠 X2 < 3']
+        X3 [label = '🧠 X3 < 7']
+        X4 [label = '🧠 X4 < 2']
+        Leaf1 [label = '🍃 Leaf', fillcolor = '#dcfce7']
+        Leaf2 [label = '🍃 Leaf', fillcolor = '#dcfce7']
+        Leaf3 [label = '🍃 Leaf', fillcolor = '#dcfce7']
+        Leaf4 [label = '🍃 Leaf', fillcolor = '#dcfce7']
+        Leaf5 [label = '🍃 Leaf', fillcolor = '#dcfce7']
+
+        Nivel0 [label = '🟦 Nivel 0', shape = plaintext, fontcolor = '#4b5563', fontsize = 12]
+        Nivel1 [label = '🟩 Nivel 1', shape = plaintext, fontcolor = '#4b5563', fontsize = 12]
+        Nivel2 [label = '🟨 Nivel 2', shape = plaintext, fontcolor = '#4b5563', fontsize = 12]
+        Nivel3 [label = '🟧 Nivel 3', shape = plaintext, fontcolor = '#4b5563', fontsize = 12]
+
+        {rank = same; Nivel0; X1}
+        {rank = same; Nivel1; X2; X3}
+        {rank = same; Nivel2; Leaf1; Leaf2; X4; Leaf5}
+        {rank = same; Nivel3; Leaf3; Leaf4}
+
+        X1 -> X2
+        X1 -> X3
+        X2 -> Leaf1
+        X2 -> Leaf2
+        X3 -> X4
+        X3 -> Leaf5
+        X4 -> Leaf3
+        X4 -> Leaf4
+      }
+    ")
+  )
+)
+
+```
+
 ### 3. `min_data_in_leaf`
 
 Indica la mínima cantidad de observaciones (filas) que debe tener cada hoja en un árbol. Una hoja es un grupo final de datos al que el modelo aplica una predicción. Si una hoja tiene muy pocos datos, puede memorizar el entrenamiento (overfitting). Esto permite controlar la capacidad del árbol de especializarse demasiado.
@@ -817,8 +900,7 @@ div(
     "margin: auto;"
   ),
   HTML("<strong style='color:#047857;'>✅ Tip importante:</strong><br>"),
-  p(HTML("📉 Usá <strong>validación temprana</strong> (<em>early stopping</em>) para evitar entrenar de más.")),
-  p(HTML("Esto detiene el entrenamiento cuando el modelo <strong>deja de mejorar</strong> sobre un conjunto de validación."))
+  p(HTML("📉 Usá (<em>early stopping</em>) para evitar entrenar de más. Esto detiene el entrenamiento cuando el modelo <strong>deja de mejorar</strong> sobre un conjunto de validación.")),
 )
 ```
 
@@ -904,7 +986,79 @@ LightGBM está disponible en CRAN y puede instalarse con el siguiente código R.
 
 ```{r instalacion, eval=FALSE}
 install.packages("lightgbm", repos = "https://cran.r-project.org")
-library(lightgbm)
 ```
 
 Cada versión del paquete que ha estado en CRAN también está disponible en los [LightGBM releases](https://github.com/microsoft/LightGBM/releases), con un formato de nombre lightgbm-{VERSION}-r-cran.tar.gz
+
+```{r github, eval=FALSE}
+devtools::install_github("microsoft/LightGBM", subdir = "R-package")
+```
+
+# Ejemplo: librerías
+
+```{r librerias}
+library(readr)
+library(dplyr)
+library(fastDummies)
+library(lightgbm)
+library(pROC)
+library(ggplot2)
+```
+
+
+# Ejemplo: lecturea de datos
+
+```{r wd, include=FALSE, eval=TRUE}
+setwd("..")
+getwd()
+train_values <- read_csv("data/train_values.csv")
+train_labels <- read_csv("data/train_labels.csv")
+test_values <- read_csv("data/test_values.csv")
+test_labels <- read_csv("data/test_labels.csv")
+```
+
+
+```{r lectura, eval=FALSE}
+train_values <- read_csv("data/train_values.csv")
+train_labels <- read_csv("data/train_labels.csv")
+test_values <- read_csv("data/test_values.csv")
+test_labels <- read_csv("data/test_labels.csv")
+```
+
+# Ejemplo: preprocessing
+
+## Preparación de las features de entrenamiento
+
+```{r x_train}
+X_train <- train_values |> 
+  select(-patient_id) |>             # Se elimina la columna ID ya que no aporta info
+  mutate(thal = as.factor(thal)) |>  # Convertimos 'thal' a factor (categórica)
+  dummy_cols(
+    select_columns = "thal",
+    remove_selected_columns = TRUE
+  ) |>                               # Creamos columnas dummy para 'thal'
+  as.matrix()                        # Convertimos el data frame a matriz
+```
+
+## Preparación de la variable objetivo o target
+
+```{r y_train}
+y_train <- train_labels |> select(heart_disease_present) |> as.matrix()
+```
+
+## Se repite el proceso para el conjunto de validación
+
+```{r test}
+X_test <- as.matrix(
+  test_values |> 
+  select(-patient_id) |> 
+  mutate(thal = as.factor(thal)) |> 
+  dummy_cols(select_columns = "thal", remove_selected_columns = TRUE)
+)
+
+y_test <- test_labels |> 
+  select(heart_disease_present) |> 
+  as.matrix()
+```
+
+# Ejemplo: Análisis exploratorio de datos (EDA)
