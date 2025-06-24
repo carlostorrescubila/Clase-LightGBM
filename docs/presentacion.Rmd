@@ -178,7 +178,7 @@ Donde:
 
 En la siguiente imagen se representa visualmente el proceso de mejora paso a paso de un modelo basado en *Gradien Boosting*. 
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.align='center'}
 library(lightgbm)
 library(ggplot2)
 library(dplyr)
@@ -522,66 +522,389 @@ html <- tags$div(
 browsable(html)
 ```
 
-# Parámetros de LightGBM
+# Parámetros de LightGBM (I)
 
 Cuando entrenamos un modelo con lightgbm, necesitamos decirle cómo aprender. Los parámetros del modelo le indican a LightGBM como y que tanto aprender. Para una información más completa de los parámetros de LightGBM visitar la [documentación oficial en R](https://lightgbm.readthedocs.io/en/latest/R/index.html).
 
-Los principales parámetros que debemos conocoer son:
+## ⚙️ Parámetros generales
 
-#### 1. objective
+### 1. `objective`
 
-Especifica la función de pérdida que se optimizará durante el entrenamiento. Qué tipo de problema estás resolviendo. Los principales valores de este parámetro son:
+Es el parámetro más importante de todos. Le dice a LightGBM qué tipo de problema estás resolviendo para que use la función de pérdida adecuada durante el entrenamiento. 
 
-- `"regression"` → si es un valor numérico continuo
+#### 🎓 Tipos de `objective` más comunes
 
-- `"binary"` → si es una clasificación con dos clases
+| Tipo de problema                            | Valor de `objective` | ¿Qué hace internamente? |
+| ------------------------------------------- | -------------------- | ----------------------------------------- |
+| **Regresión** (valores continuos)           | `"regression"`       | Minimiza el error cuadrático medio (MSE) |
+| **Clasificación binaria** (0/1)             | `"binary"`           | Minimiza la pérdida logarítmica |
+| **Clasificación múltiple** (3 o más clases) | `"multiclass"`       | Usa softmax y logloss para varias clases |
+| **Regresión con outliers**                  | `"huber"`            | Usa función Huber para menos |
+| **Ranking** (ordenar ítems)                 | `"lambdarank"`       | Optimiza una función de ranking |
 
-- `"multiclass"` → si hay más de dos clases
+### 2. `metric`
 
-#### 2. metric
+Define cómo se mide el desempeño del modelo durante el entrenamiento. Se puede usar una o varias métricas a la vez, y se muestran en cada iteración si `verbose > 0`
 
-Es la métrica principal que utilizará el modelo para medir si el modelo está aprendiendo bien.
+#### 🎓 Métricas más comunes por tipo de problema
 
-Ejemplos:
+##### 🔢 Regresión (`objective = "regression"`)
 
-- `"rmse"` → error cuadrático medio (regresión)
+| `metric`  | ¿Qué mide?                              |
+| --------- | --------------------------------------- |
+| `"l2"`    | Error cuadrático medio (MSE)            |
+| `"rmse"`  | Raíz del error cuadrático medio         |
+| `"mae"`   | Error absoluto medio                    |
+| `"huber"` | Error Huber (menos sensible a outliers) |
 
-- `"binary_logloss"` → para clasificación binaria
+##### ✅ Clasificación binaria (`objective = "binary"`)
 
-- `"multi_logloss"` → clasificación múltiple
+| `metric`           | ¿Qué mide?                                                      |
+| ------------------ | --------------------------------------------------------------- |
+| `"binary_logloss"` | Pérdida logarítmica (predicciones vs probabilidades verdaderas) |
+| `"auc"`            | Área bajo la curva ROC                                          |
+| `"binary_error"`   | Tasa de error (0/1 mal clasificados)                            |
 
-#### 3. num_leaves
+##### 🎯 Clasificación multiclase (objective = "multiclass")
 
-Determina el tamaño del árbol de decisión. Más hojas significa más complejidad, pero también más riesgo de sobreajuste. recomienda empezar con 31 o menos.
+| `metric`          | ¿Qué mide?                                |
+| ----------------- | ----------------------------------------- |
+| `"multi_logloss"` | Pérdida logarítmica para múltiples clases |
+| `"multi_error"`   | Porcentaje de predicciones incorrectas    |
 
-#### 4. learning_rate
+### 3. `boosting`
 
-Controla cuánto cambia el modelo en cada iteración. Mientras más bajo la convergencia es más lenta, pero más precisa. Se recomienda empezar con 0.1 o incluso 0.05.
+Indica qué algoritmo de boosting usar para entrenar el modelo. El método de boosting impacta en:
 
-#### 5. max_depth
+```{r boosting, echo=FALSE}
+step_style <- "
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 180px;
+  min-height: 160px;
+  padding: 16px;
+  border-radius: 16px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  box-shadow: 4px 6px 14px rgba(0,0,0,0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+"
 
-Indica cuán profundo pueden ser los árboles. Es muy útil para limitar la complejidad.
+icon_style <- function(bg, color = "black") {
+  paste0(
+    "font-size: 32px; background:", bg,
+    "; color:", color, "; padding: 12px; border-radius: 50%; margin-bottom: 10px;"
+  )
+}
 
-#### 6. early_stopping_round
+steps <- tagList(
+  tags$div(
+    style = step_style,
+    tags$div(style = icon_style("#fee2e2", "#dc2626"), "⏱️"),
+    tags$strong(style = "text-align: center;", "Velocidad de entrenamiento")
+  ),
+  tags$div(
+    style = step_style,
+    tags$div(style = icon_style("#e0f2fe", "#2563eb"), "🧠"),
+    tags$strong(style = "text-align: center;", "Precisión del modelo")
+  ),
+  tags$div(
+    style = step_style,
+    tags$div(style = icon_style("#ecfccb", "#65a30d"), "💾"),
+    tags$strong(style = "text-align: center;", "Consumo de memoria")
+  ),
+  tags$div(
+    style = step_style,
+    tags$div(style = icon_style("#fae8ff", "#a21caf"), "🔥"),
+    tags$strong(style = "text-align: center;", "Robustez al overfitting")
+  )
+)
 
-Detiene el entrenamiento si no mejora en cierto número de iteraciones.
+tags$div(
+  style = "
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 24px;
+    margin-top: 20px;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 16px;
+  ",
+  steps
+)
 
-#### 7. nrounds
+```
 
-Número total de iteraciones (árboles) que se van a construir.Este parámetro va fuera de params
+LightGBM permite seleccionar entre 4 métodos de boosting
 
-Se usa en validación con lgb.cv() o lgb.train() si hay conjunto de validación.
+| Valor    | ¿Qué hace?                                                                   | ¿Cuándo usarlo?                              |
+| -------- | ---------------------------------------------------------------------------- | -------------------------------------------- |
+| `"gbdt"` | **Gradient Boosted Decision Trees** (por defecto)                            | ✔️ Preciso, funciona bien en casi todo       |
+| `"dart"` | Como GBDT, pero **descarta algunos árboles al azar**                         | ✔️ Bueno para evitar overfitting             |
+| `"goss"` | **Gradient-based One-Side Sampling**: se entrena con un subconjunto de datos | ✔️ Más rápido, útil con muchos datos         |
+| `"rf"`   | **Random Forest**: como método de bagging, no es boosting puro               | 🔁 Solo si necesitas usar árboles aleatorios |
+
+
+### 4. `verbosity`
+
+Controla cuánta información imprime LightGBM en consola mientras entrena el modelo.
+
+```{r verbosity, echo=FALSE}
+card_style <- "
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 180px;
+  padding: 16px;
+  border-radius: 16px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  box-shadow: 3px 4px 12px rgba(0,0,0,0.06);
+  transition: transform 0.3s ease;
+"
+
+icon_style <- function(bg, color = "black") {
+  paste0(
+    "font-size: 30px; background:", bg,
+    "; color:", color,
+    "; padding: 10px; border-radius: 50%; margin-bottom: 10px;"
+  )
+}
+
+verbosity_cards <- tagList(
+  tags$div(
+    style = card_style,
+    tags$div(style = icon_style("#f3f4f6", "#374151"), "🔇"),
+    tags$strong("-1"),
+    tags$p("No imprime nada. Entrenamiento silencioso.")
+  ),
+  tags$div(
+    style = card_style,
+    tags$div(style = icon_style("#fef3c7", "#92400e"), "⚠️"),
+    tags$strong("0"),
+    tags$p("Solo muestra errores graves.")
+  ),
+  tags$div(
+    style = card_style,
+    tags$div(style = icon_style("#e0f2fe", "#1e40af"), "ℹ️"),
+    tags$strong("1"),
+    tags$p("Errores y advertencias (warnings).")
+  ),
+  tags$div(
+    style = card_style,
+    tags$div(style = icon_style("#d1fae5", "#047857"), "🔍"),
+    tags$strong("2"),
+    tags$p("Muestra información del progreso del entrenamiento.")
+  ),
+  tags$div(
+    style = card_style,
+    tags$div(style = icon_style("#ede9fe", "#6b21a8"), "🧠"),
+    tags$strong("3+"),
+    tags$p("Modo detallado. Útil para debugging profundo.")
+  )
+)
+
+tags$div(
+  style = "
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 20px;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 15px;
+  ",
+  verbosity_cards
+)
+```
+
+# Parámetros de LightGBM (II)
+
+## 🌲 Estructura del árbol
+
+### 1. `num_leaves`
+
+Determina cuántas hojas (leaves) puede tener cada árbol de decisión que construye LightGBM. Una hoja es donde termina una decisión, y contiene la predicción final para una parte del dataset. Mientras más hojas, más complejo y flexible puede ser el árbol.
+
+| Situación                    | Valor sugerido      |
+| ---------------------------- | ------------------- |
+| Dataset pequeño              | 15–31 hojas         |
+| Dataset grande               | 64–255 hojas        |
+| Muchas variables categóricas | Menos hojas mejor   |
+| Cuando hay overfitting       | Reduce `num_leaves` |
+
+```{r num_leaves, echo=FALSE}
+div(
+  style = "background: #fff4e5; border-left: 6px solid #f59e0b; padding: 10px; border-radius: 6px; font-size: 22px;",
+  HTML("⚠️ <strong>Importante:</strong> <code>num_leaves</code> debe ser <strong>menor que</strong> <code>2^max_depth</code> para evitar <em>overfitting</em>.")
+)
+```
+
+
+### 2. `max_depth`
+
+Controla cuántos niveles de decisiones puede tener un árbol individual. Si se reduce, se evita que los árboles se vuelvan demasiado complejos. Un valor de -1, LightGBM decide por su cuenta (crece hasta donde haga falta).
+
+### 3. `min_data_in_leaf`
+
+Indica la mínima cantidad de observaciones (filas) que debe tener cada hoja en un árbol. Una hoja es un grupo final de datos al que el modelo aplica una predicción. Si una hoja tiene muy pocos datos, puede memorizar el entrenamiento (overfitting). Esto permite controlar la capacidad del árbol de especializarse demasiado.
+
+#### ⚖️ Recomendaciones prácticas
+
+| Dataset                 | Valor sugerido |
+| ----------------------- | -------------- |
+| Pequeño (<10,000 filas) | 10–50          |
+| Mediano                 | 100–500        |
+| Grande                  | 500–1000 o más |
+
+
+# Parámetros de LightGBM (III)
+
+## 🐢 Control del aprendizaje
+
+### 1. `learning_rate`
+
+Define cuánto se ajusta el modelo en cada iteración (árbol). Si el `learning_rate` es muy grande, el modelo aprende rápido, pero puede pasarse de largo.
+
+#### 📊 Efecto según el valor
+
+| `learning_rate`    | Qué pasa                                               |
+| ------------------ | ------------------------------------------------------ |
+| Alto (`≥ 0.2`)     | Aprende rápido, pero puede sobreajustar o divergir     |
+| Medio (`0.05–0.1`) | Equilibrio entre velocidad y precisión                 |
+| Bajo (`< 0.05`)    | Aprende lento pero con mayor control y precisión final |
+
+```{r learning_rate, echo=FALSE}
+div(
+  style = paste(
+    "background: #fff7ed;",
+    "border-left: 6px solid #f97316;",
+    "padding: 10px;",
+    "border-radius: 6px;",
+    "line-height: 1.5;",
+    "font-size: 22px;",
+    "margin: auto;"
+  ),
+  HTML("<strong style='color:#c2410c;'>⚠️ Cuidado:</strong><br>"),
+  p(HTML("Valores muy altos <code>(learning_rate &gt; 0.3)</code> → el modelo puede ser <strong>inestable</strong> y <em>no generalizar bien</em>.")),
+  p(HTML("Valores muy bajos <code>(learning_rate &lt; 0.01)</code> → el modelo <strong>entrena muy lento</strong> y requiere más <em>fine tuning</em>."))
+)
+```
+
+### 2. `nrounds`
+
+Define cuántos árboles se van a construir durante el entrenamiento. Este parámetro va fuera de params. Se usa en validación con lgb.cv() o lgb.train() si hay conjunto de validación.
+
+#### 🧪 Recomendación práctica
+
+| `learning_rate` | `nrounds` sugerido |
+| --------------- | ------------------ |
+| `0.1`           | 100–500            |
+| `0.05`          | 500–1000           |
+| `0.01`          | 1000–3000          |
+
+```{r nrounds, echo=FALSE}
+div(
+  style = paste(
+    "background: #ecfdf5;",
+    "border-left: 6px solid #10b981;",
+    "padding: 10px;",
+    "border-radius: 6px;",
+    "line-height: 1.5;",
+    "font-size: 22px;",
+    "margin: auto;"
+  ),
+  HTML("<strong style='color:#047857;'>✅ Tip importante:</strong><br>"),
+  p(HTML("📉 Usá <strong>validación temprana</strong> (<em>early stopping</em>) para evitar entrenar de más.")),
+  p(HTML("Esto detiene el entrenamiento cuando el modelo <strong>deja de mejorar</strong> sobre un conjunto de validación."))
+)
+```
+
+# Parámetros de LightGBM (IV)
+
+## 🛑 Regularización y generalización
+
+### 1. `early_stopping_round`
+
+Detiene el entrenamiento automáticamente si el modelo no mejora en un número determinado de iteraciones consecutivas sobre un conjunto de validación.
+
+```{r early_stopping_round, echo=FALSE}
+card_style <- "
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 160px;
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.06);
+  transition: transform 0.3s;
+  font-size: 22px;
+  text-align: center;
+"
+
+cards <- tagList(
+  tags$div(
+    style = card_style,
+    tags$span(style = "font-size: 28px;", "⏱️"),
+    tags$strong("Ahorra tiempo"),
+    "Evita entrenar más rondas de las necesarias."
+  ),
+  tags$div(
+    style = card_style,
+    tags$span(style = "font-size: 28px;", "❌"),
+    tags$strong("Reduce el sobreajuste"),
+    "Se detiene cuando ya no mejora la validación."
+  ),
+  tags$div(
+    style = card_style,
+    tags$span(style = "font-size: 28px;", "🎯"),
+    tags$strong("Mejora la precisión"),
+    "Ayuda a encontrar el número ideal de árboles."
+  )
+)
+
+tags$div(
+  style = "display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 20px;",
+  cards
+)
+```
+
+### 2. `bagging_fraction`
+
+Indica el porcentaje de observaciones (filas) usadas para entrenar cada árbol. Esto reduce varianza del modelo al hacer que cada árbol vea datos distintos. LightGBM utiliza muestreo sin reemplazo en cada árbol, de manera de que cada fila solo se utilizara una única vez en el entrenamiento de cada uno de los arboles de manera aleatoria.
+
+<center>
+  <img src="https://www.baeldung.com/wp-content/uploads/sites/4/2023/07/img_64bd9575e6fc8.svg" width="auto" />
+</center>
+
+### 3. `feature_fraction`
+
+Indica el porcentaje de columnas (features) seleccionadas aleatoriamente para construir cada árbol. Esto introduce variabilidad y reduce la correlación entre árboles. Es de mucha utilidad cuando hay muchas columnas.
+
+### 4. `min_gain_to_split`
+
+Impide que se creen ramas nuevas si la ganancia no supera cierto umbral, actuando como un filtro para evitar divisiones poco informativas. Esto ayuda a simplificar los árboles.
+
+### 5. `lambda_l1`
+
+La regularización L1 (Lasso) castiga la suma de los valores absolutos de las hojas del árbol. Esto fuerza la simplicidad empujado pesos de variables poco importantes hacia cero. Suele ser útil cuando hay muchas variables poco útiles.
+
+### 6. `lambda_l2`
+
+La regularización L2 (Ridge) penaliza la suma de los cuadrados de los valores en las hojas. Esto evita que las predicciones sean demasiado extremas, ayudandon así a la estabilidad del modelo.
+
+# Datos para el ejemplo
 
 # Instalación
 
-```{r instalacion}
-# Instalar solo si no están instalados
-# install.packages("lightgbm", repos = "https://cran.r-project.org")
-# install.packages("Matrix")
-# install.packages("data.table")
+LightGBM está disponible en CRAN y puede instalarse con el siguiente código R.
 
+```{r instalacion, eval=FALSE}
+install.packages("lightgbm", repos = "https://cran.r-project.org")
 library(lightgbm)
-library(Matrix)
-library(data.table)
-
 ```
+
+Cada versión del paquete que ha estado en CRAN también está disponible en los [LightGBM releases](https://github.com/microsoft/LightGBM/releases), con un formato de nombre lightgbm-{VERSION}-r-cran.tar.gz

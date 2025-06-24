@@ -2303,65 +2303,602 @@ margin-bottom: 10px;
 </div>
 </div>
 </div>
-<div id="parámetros-de-lightgbm" class="slide section level1">
-<h1>Parámetros de LightGBM</h1>
+<div id="parámetros-de-lightgbm-i" class="slide section level1">
+<h1>Parámetros de LightGBM (I)</h1>
 <p>Cuando entrenamos un modelo con lightgbm, necesitamos decirle cómo
 aprender. Los parámetros del modelo le indican a LightGBM como y que
 tanto aprender. Para una información más completa de los parámetros de
 LightGBM visitar la <a href="https://lightgbm.readthedocs.io/en/latest/R/index.html">documentación
 oficial en R</a>.</p>
-<p>Los principales parámetros que debemos conocoer son:</p>
-<h4 id="objective">1. objective</h4>
-<p>Especifica la función de pérdida que se optimizará durante el
-entrenamiento. Qué tipo de problema estás resolviendo. Los principales
-valores de este parámetro son:</p>
-<ul>
-<li><p><code>&quot;regression&quot;</code> → si es un valor numérico
-continuo</p></li>
-<li><p><code>&quot;binary&quot;</code> → si es una clasificación con dos
-clases</p></li>
-<li><p><code>&quot;multiclass&quot;</code> → si hay más de dos clases</p></li>
-</ul>
-<h4 id="metric">2. metric</h4>
-<p>Es la métrica principal que utilizará el modelo para medir si el
-modelo está aprendiendo bien.</p>
-<p>Ejemplos:</p>
-<ul>
-<li><p><code>&quot;rmse&quot;</code> → error cuadrático medio (regresión)</p></li>
-<li><p><code>&quot;binary_logloss&quot;</code> → para clasificación
-binaria</p></li>
-<li><p><code>&quot;multi_logloss&quot;</code> → clasificación múltiple</p></li>
-</ul>
-<h4 id="num_leaves">3. num_leaves</h4>
-<p>Determina el tamaño del árbol de decisión. Más hojas significa más
-complejidad, pero también más riesgo de sobreajuste. recomienda empezar
-con 31 o menos.</p>
-<h4 id="learning_rate">4. learning_rate</h4>
-<p>Controla cuánto cambia el modelo en cada iteración. Mientras más bajo
-la convergencia es más lenta, pero más precisa. Se recomienda empezar
-con 0.1 o incluso 0.05.</p>
-<h4 id="max_depth">5. max_depth</h4>
-<p>Indica cuán profundo pueden ser los árboles. Es muy útil para limitar
-la complejidad.</p>
-<h4 id="early_stopping_round">6. early_stopping_round</h4>
-<p>Detiene el entrenamiento si no mejora en cierto número de
-iteraciones.</p>
-<h4 id="nrounds">7. nrounds</h4>
-<p>Número total de iteraciones (árboles) que se van a construir.Este
-parámetro va fuera de params</p>
-<p>Se usa en validación con lgb.cv() o lgb.train() si hay conjunto de
+<h2 id="parámetros-generales">⚙️ Parámetros generales</h2>
+<h3 id="objective">1. <code>objective</code></h3>
+<p>Es el parámetro más importante de todos. Le dice a LightGBM qué tipo
+de problema estás resolviendo para que use la función de pérdida
+adecuada durante el entrenamiento.</p>
+<h4 id="tipos-de-objective-más-comunes">🎓 Tipos de
+<code>objective</code> más comunes</h4>
+<table>
+<colgroup>
+<col width="41%" />
+<col width="19%" />
+<col width="39%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Tipo de problema</th>
+<th>Valor de <code>objective</code></th>
+<th>¿Qué hace internamente?</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Regresión</strong> (valores continuos)</td>
+<td><code>&quot;regression&quot;</code></td>
+<td>Minimiza el error cuadrático medio (MSE)</td>
+</tr>
+<tr class="even">
+<td><strong>Clasificación binaria</strong> (0/1)</td>
+<td><code>&quot;binary&quot;</code></td>
+<td>Minimiza la pérdida logarítmica</td>
+</tr>
+<tr class="odd">
+<td><strong>Clasificación múltiple</strong> (3 o más clases)</td>
+<td><code>&quot;multiclass&quot;</code></td>
+<td>Usa softmax y logloss para varias clases</td>
+</tr>
+<tr class="even">
+<td><strong>Regresión con outliers</strong></td>
+<td><code>&quot;huber&quot;</code></td>
+<td>Usa función Huber para menos</td>
+</tr>
+<tr class="odd">
+<td><strong>Ranking</strong> (ordenar ítems)</td>
+<td><code>&quot;lambdarank&quot;</code></td>
+<td>Optimiza una función de ranking</td>
+</tr>
+</tbody>
+</table>
+<h3 id="metric">2. <code>metric</code></h3>
+<p>Define cómo se mide el desempeño del modelo durante el entrenamiento.
+Se puede usar una o varias métricas a la vez, y se muestran en cada
+iteración si <code>verbose &gt; 0</code></p>
+<h4 id="métricas-más-comunes-por-tipo-de-problema">🎓 Métricas más
+comunes por tipo de problema</h4>
+<h5 id="regresión-objective-regression">🔢 Regresión
+(<code>objective = &quot;regression&quot;</code>)</h5>
+<table>
+<thead>
+<tr class="header">
+<th><code>metric</code></th>
+<th>¿Qué mide?</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>&quot;l2&quot;</code></td>
+<td>Error cuadrático medio (MSE)</td>
+</tr>
+<tr class="even">
+<td><code>&quot;rmse&quot;</code></td>
+<td>Raíz del error cuadrático medio</td>
+</tr>
+<tr class="odd">
+<td><code>&quot;mae&quot;</code></td>
+<td>Error absoluto medio</td>
+</tr>
+<tr class="even">
+<td><code>&quot;huber&quot;</code></td>
+<td>Error Huber (menos sensible a outliers)</td>
+</tr>
+</tbody>
+</table>
+<h5 id="clasificación-binaria-objective-binary">✅ Clasificación binaria
+(<code>objective = &quot;binary&quot;</code>)</h5>
+<table>
+<colgroup>
+<col width="22%" />
+<col width="77%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th><code>metric</code></th>
+<th>¿Qué mide?</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>&quot;binary_logloss&quot;</code></td>
+<td>Pérdida logarítmica (predicciones vs probabilidades verdaderas)</td>
+</tr>
+<tr class="even">
+<td><code>&quot;auc&quot;</code></td>
+<td>Área bajo la curva ROC</td>
+</tr>
+<tr class="odd">
+<td><code>&quot;binary_error&quot;</code></td>
+<td>Tasa de error (0/1 mal clasificados)</td>
+</tr>
+</tbody>
+</table>
+<h5 id="clasificación-multiclase-objective-multiclass">🎯 Clasificación
+multiclase (objective = “multiclass”)</h5>
+<table>
+<thead>
+<tr class="header">
+<th><code>metric</code></th>
+<th>¿Qué mide?</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>&quot;multi_logloss&quot;</code></td>
+<td>Pérdida logarítmica para múltiples clases</td>
+</tr>
+<tr class="even">
+<td><code>&quot;multi_error&quot;</code></td>
+<td>Porcentaje de predicciones incorrectas</td>
+</tr>
+</tbody>
+</table>
+<h3 id="boosting">3. <code>boosting</code></h3>
+<p>Indica qué algoritmo de boosting usar para entrenar el modelo. El
+método de boosting impacta en:</p>
+<div style="
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 24px;
+    margin-top: 20px;
+    font-family: &#39;Segoe UI&#39;, sans-serif;
+    font-size: 16px;
+  ">
+<div style="
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 180px;
+  min-height: 160px;
+  padding: 16px;
+  border-radius: 16px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  box-shadow: 4px 6px 14px rgba(0,0,0,0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+">
+<div style="font-size: 32px; background:#fee2e2; color:#dc2626; padding: 12px; border-radius: 50%; margin-bottom: 10px;">⏱️</div>
+<strong style="text-align: center;">Velocidad de entrenamiento</strong>
+</div>
+<div style="
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 180px;
+  min-height: 160px;
+  padding: 16px;
+  border-radius: 16px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  box-shadow: 4px 6px 14px rgba(0,0,0,0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+">
+<div style="font-size: 32px; background:#e0f2fe; color:#2563eb; padding: 12px; border-radius: 50%; margin-bottom: 10px;">🧠</div>
+<strong style="text-align: center;">Precisión del modelo</strong>
+</div>
+<div style="
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 180px;
+  min-height: 160px;
+  padding: 16px;
+  border-radius: 16px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  box-shadow: 4px 6px 14px rgba(0,0,0,0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+">
+<div style="font-size: 32px; background:#ecfccb; color:#65a30d; padding: 12px; border-radius: 50%; margin-bottom: 10px;">💾</div>
+<strong style="text-align: center;">Consumo de memoria</strong>
+</div>
+<div style="
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 180px;
+  min-height: 160px;
+  padding: 16px;
+  border-radius: 16px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  box-shadow: 4px 6px 14px rgba(0,0,0,0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+">
+<div style="font-size: 32px; background:#fae8ff; color:#a21caf; padding: 12px; border-radius: 50%; margin-bottom: 10px;">🔥</div>
+<strong style="text-align: center;">Robustez al overfitting</strong>
+</div>
+</div>
+<p>LightGBM permite seleccionar entre 4 métodos de boosting</p>
+<table>
+<colgroup>
+<col width="6%" />
+<col width="59%" />
+<col width="34%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Valor</th>
+<th>¿Qué hace?</th>
+<th>¿Cuándo usarlo?</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>&quot;gbdt&quot;</code></td>
+<td><strong>Gradient Boosted Decision Trees</strong> (por defecto)</td>
+<td>✔️ Preciso, funciona bien en casi todo</td>
+</tr>
+<tr class="even">
+<td><code>&quot;dart&quot;</code></td>
+<td>Como GBDT, pero <strong>descarta algunos árboles al
+azar</strong></td>
+<td>✔️ Bueno para evitar overfitting</td>
+</tr>
+<tr class="odd">
+<td><code>&quot;goss&quot;</code></td>
+<td><strong>Gradient-based One-Side Sampling</strong>: se entrena con un
+subconjunto de datos</td>
+<td>✔️ Más rápido, útil con muchos datos</td>
+</tr>
+<tr class="even">
+<td><code>&quot;rf&quot;</code></td>
+<td><strong>Random Forest</strong>: como método de bagging, no es
+boosting puro</td>
+<td>🔁 Solo si necesitas usar árboles aleatorios</td>
+</tr>
+</tbody>
+</table>
+<h3 id="verbosity">4. <code>verbosity</code></h3>
+<p>Controla cuánta información imprime LightGBM en consola mientras
+entrena el modelo.</p>
+<div style="
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 20px;
+    font-family: &#39;Segoe UI&#39;, sans-serif;
+    font-size: 15px;
+  ">
+<div style="
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 180px;
+  padding: 16px;
+  border-radius: 16px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  box-shadow: 3px 4px 12px rgba(0,0,0,0.06);
+  transition: transform 0.3s ease;
+">
+<div style="font-size: 30px; background:#f3f4f6; color:#374151; padding: 10px; border-radius: 50%; margin-bottom: 10px;">🔇</div>
+<strong>-1</strong>
+<p>No imprime nada. Entrenamiento silencioso.</p>
+</div>
+<div style="
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 180px;
+  padding: 16px;
+  border-radius: 16px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  box-shadow: 3px 4px 12px rgba(0,0,0,0.06);
+  transition: transform 0.3s ease;
+">
+<div style="font-size: 30px; background:#fef3c7; color:#92400e; padding: 10px; border-radius: 50%; margin-bottom: 10px;">⚠️</div>
+<strong>0</strong>
+<p>Solo muestra errores graves.</p>
+</div>
+<div style="
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 180px;
+  padding: 16px;
+  border-radius: 16px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  box-shadow: 3px 4px 12px rgba(0,0,0,0.06);
+  transition: transform 0.3s ease;
+">
+<div style="font-size: 30px; background:#e0f2fe; color:#1e40af; padding: 10px; border-radius: 50%; margin-bottom: 10px;">ℹ️</div>
+<strong>1</strong>
+<p>Errores y advertencias (warnings).</p>
+</div>
+<div style="
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 180px;
+  padding: 16px;
+  border-radius: 16px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  box-shadow: 3px 4px 12px rgba(0,0,0,0.06);
+  transition: transform 0.3s ease;
+">
+<div style="font-size: 30px; background:#d1fae5; color:#047857; padding: 10px; border-radius: 50%; margin-bottom: 10px;">🔍</div>
+<strong>2</strong>
+<p>Muestra información del progreso del entrenamiento.</p>
+</div>
+<div style="
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 180px;
+  padding: 16px;
+  border-radius: 16px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  box-shadow: 3px 4px 12px rgba(0,0,0,0.06);
+  transition: transform 0.3s ease;
+">
+<div style="font-size: 30px; background:#ede9fe; color:#6b21a8; padding: 10px; border-radius: 50%; margin-bottom: 10px;">🧠</div>
+<strong>3+</strong>
+<p>Modo detallado. Útil para debugging profundo.</p>
+</div>
+</div>
+</div>
+<div id="parámetros-de-lightgbm-ii" class="slide section level1">
+<h1>Parámetros de LightGBM (II)</h1>
+<h2 id="estructura-del-árbol">🌲 Estructura del árbol</h2>
+<h3 id="num_leaves">1. <code>num_leaves</code></h3>
+<p>Determina cuántas hojas (leaves) puede tener cada árbol de decisión
+que construye LightGBM. Una hoja es donde termina una decisión, y
+contiene la predicción final para una parte del dataset. Mientras más
+hojas, más complejo y flexible puede ser el árbol.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Situación</th>
+<th>Valor sugerido</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Dataset pequeño</td>
+<td>15–31 hojas</td>
+</tr>
+<tr class="even">
+<td>Dataset grande</td>
+<td>64–255 hojas</td>
+</tr>
+<tr class="odd">
+<td>Muchas variables categóricas</td>
+<td>Menos hojas mejor</td>
+</tr>
+<tr class="even">
+<td>Cuando hay overfitting</td>
+<td>Reduce <code>num_leaves</code></td>
+</tr>
+</tbody>
+</table>
+<div style="background: #fff4e5; border-left: 6px solid #f59e0b; padding: 10px; border-radius: 6px; font-size: 22px;">⚠️ <strong>Importante:</strong> <code>num_leaves</code> debe ser <strong>menor que</strong> <code>2^max_depth</code> para evitar <em>overfitting</em>.</div>
+<h3 id="max_depth">2. <code>max_depth</code></h3>
+<p>Controla cuántos niveles de decisiones puede tener un árbol
+individual. Si se reduce, se evita que los árboles se vuelvan demasiado
+complejos. Un valor de -1, LightGBM decide por su cuenta (crece hasta
+donde haga falta).</p>
+<h3 id="min_data_in_leaf">3. <code>min_data_in_leaf</code></h3>
+<p>Indica la mínima cantidad de observaciones (filas) que debe tener
+cada hoja en un árbol. Una hoja es un grupo final de datos al que el
+modelo aplica una predicción. Si una hoja tiene muy pocos datos, puede
+memorizar el entrenamiento (overfitting). Esto permite controlar la
+capacidad del árbol de especializarse demasiado.</p>
+<h4 id="recomendaciones-prácticas">⚖️ Recomendaciones prácticas</h4>
+<table>
+<thead>
+<tr class="header">
+<th>Dataset</th>
+<th>Valor sugerido</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Pequeño (&lt;10,000 filas)</td>
+<td>10–50</td>
+</tr>
+<tr class="even">
+<td>Mediano</td>
+<td>100–500</td>
+</tr>
+<tr class="odd">
+<td>Grande</td>
+<td>500–1000 o más</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="parámetros-de-lightgbm-iii" class="slide section level1">
+<h1>Parámetros de LightGBM (III)</h1>
+<h2 id="control-del-aprendizaje">🐢 Control del aprendizaje</h2>
+<h3 id="learning_rate">1. <code>learning_rate</code></h3>
+<p>Define cuánto se ajusta el modelo en cada iteración (árbol). Si el
+<code>learning_rate</code> es muy grande, el modelo aprende rápido, pero
+puede pasarse de largo.</p>
+<h4 id="efecto-según-el-valor">📊 Efecto según el valor</h4>
+<table>
+<colgroup>
+<col width="25%" />
+<col width="75%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th><code>learning_rate</code></th>
+<th>Qué pasa</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Alto (<code>≥ 0.2</code>)</td>
+<td>Aprende rápido, pero puede sobreajustar o divergir</td>
+</tr>
+<tr class="even">
+<td>Medio (<code>0.05–0.1</code>)</td>
+<td>Equilibrio entre velocidad y precisión</td>
+</tr>
+<tr class="odd">
+<td>Bajo (<code>&lt; 0.05</code>)</td>
+<td>Aprende lento pero con mayor control y precisión final</td>
+</tr>
+</tbody>
+</table>
+<div style="background: #fff7ed; border-left: 6px solid #f97316; padding: 10px; border-radius: 6px; line-height: 1.5; font-size: 22px; margin: auto;">
+<strong style="color:#c2410c;">⚠️ Cuidado:</strong><br>
+<p>Valores muy altos <code>(learning_rate &gt; 0.3)</code> → el modelo puede ser <strong>inestable</strong> y <em>no generalizar bien</em>.</p>
+<p>Valores muy bajos <code>(learning_rate &lt; 0.01)</code> → el modelo <strong>entrena muy lento</strong> y requiere más <em>fine tuning</em>.</p>
+</div>
+<h3 id="nrounds">2. <code>nrounds</code></h3>
+<p>Define cuántos árboles se van a construir durante el entrenamiento.
+Este parámetro va fuera de params. Se usa en validación con lgb.cv() o
+lgb.train() si hay conjunto de validación.</p>
+<h4 id="recomendación-práctica">🧪 Recomendación práctica</h4>
+<table>
+<thead>
+<tr class="header">
+<th><code>learning_rate</code></th>
+<th><code>nrounds</code> sugerido</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>0.1</code></td>
+<td>100–500</td>
+</tr>
+<tr class="even">
+<td><code>0.05</code></td>
+<td>500–1000</td>
+</tr>
+<tr class="odd">
+<td><code>0.01</code></td>
+<td>1000–3000</td>
+</tr>
+</tbody>
+</table>
+<div style="background: #ecfdf5; border-left: 6px solid #10b981; padding: 10px; border-radius: 6px; line-height: 1.5; font-size: 22px; margin: auto;">
+<strong style="color:#047857;">✅ Tip importante:</strong><br>
+<p>📉 Usá <strong>validación temprana</strong> (<em>early stopping</em>) para evitar entrenar de más.</p>
+<p>Esto detiene el entrenamiento cuando el modelo <strong>deja de mejorar</strong> sobre un conjunto de validación.</p>
+</div>
+</div>
+<div id="parámetros-de-lightgbm-iv" class="slide section level1">
+<h1>Parámetros de LightGBM (IV)</h1>
+<h2 id="regularización-y-generalización">🛑 Regularización y
+generalización</h2>
+<h3 id="early_stopping_round">1. <code>early_stopping_round</code></h3>
+<p>Detiene el entrenamiento automáticamente si el modelo no mejora en un
+número determinado de iteraciones consecutivas sobre un conjunto de
 validación.</p>
+<div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
+<div style="
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 160px;
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.06);
+  transition: transform 0.3s;
+  font-size: 22px;
+  text-align: center;
+">
+<span style="font-size: 28px;">⏱️</span>
+<strong>Ahorra tiempo</strong>
+Evita entrenar más rondas de las necesarias.
+</div>
+<div style="
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 160px;
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.06);
+  transition: transform 0.3s;
+  font-size: 22px;
+  text-align: center;
+">
+<span style="font-size: 28px;">❌</span>
+<strong>Reduce el sobreajuste</strong>
+Se detiene cuando ya no mejora la validación.
+</div>
+<div style="
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 160px;
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.06);
+  transition: transform 0.3s;
+  font-size: 22px;
+  text-align: center;
+">
+<span style="font-size: 28px;">🎯</span>
+<strong>Mejora la precisión</strong>
+Ayuda a encontrar el número ideal de árboles.
+</div>
+</div>
+<h3 id="bagging_fraction">2. <code>bagging_fraction</code></h3>
+<p>Indica el porcentaje de observaciones (filas) usadas para entrenar
+cada árbol. Esto reduce varianza del modelo al hacer que cada árbol vea
+datos distintos. LightGBM utiliza muestreo sin reemplazo en cada árbol,
+de manera de que cada fila solo se utilizara una única vez en el
+entrenamiento de cada uno de los arboles de manera aleatoria.</p>
+<center>
+<img role="img" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPCEtLSBEbyBub3QgZWRpdCB0aGlzIGZpbGUgd2l0aCBlZGl0b3JzIG90aGVyIHRoYW4gZHJhdy5pbyAtLT4KPCFET0NUWVBFIHN2ZyBQVUJMSUMgIi0vL1czQy8vRFREIFNWRyAxLjEvL0VOIiAiaHR0cDovL3d3dy53My5vcmcvR3JhcGhpY3MvU1ZHLzEuMS9EVEQvc3ZnMTEuZHRkIj4KPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIHdpZHRoPSI2MDFweCIgaGVpZ2h0PSIyMjFweCIgdmlld0JveD0iLTAuNSAtMC41IDYwMSAyMjEiIGNvbnRlbnQ9IiZsdDtteGZpbGUgaG9zdD0mcXVvdDthcHAuZGlhZ3JhbXMubmV0JnF1b3Q7IG1vZGlmaWVkPSZxdW90OzIwMjMtMDctMjBUMTE6MTk6NDEuMjA4WiZxdW90OyBhZ2VudD0mcXVvdDtNb3ppbGxhLzUuMCAoTWFjaW50b3NoOyBJbnRlbCBNYWMgT1MgWCAxMF8xNV83KSBBcHBsZVdlYktpdC81MzcuMzYgKEtIVE1MLCBsaWtlIEdlY2tvKSBDaHJvbWUvMTE0LjAuMC4wIFNhZmFyaS81MzcuMzYmcXVvdDsgZXRhZz0mcXVvdDtNdXBvX21FYVlKeUx5UVA3UFlxeCZxdW90OyB2ZXJzaW9uPSZxdW90OzIxLjYuMiZxdW90OyB0eXBlPSZxdW90O2RldmljZSZxdW90OyZndDsmIzEwOyAgJmx0O2RpYWdyYW0gbmFtZT0mcXVvdDtQYWdlLTEmcXVvdDsgaWQ9JnF1b3Q7SWJQT1p0S1MxalVjd3ZnNUpCNkYmcXVvdDsmZ3Q7JiMxMDsgICAgJmx0O214R3JhcGhNb2RlbCBkeD0mcXVvdDsxMDAyJnF1b3Q7IGR5PSZxdW90OzU4OSZxdW90OyBncmlkPSZxdW90OzEmcXVvdDsgZ3JpZFNpemU9JnF1b3Q7MTAmcXVvdDsgZ3VpZGVzPSZxdW90OzEmcXVvdDsgdG9vbHRpcHM9JnF1b3Q7MSZxdW90OyBjb25uZWN0PSZxdW90OzEmcXVvdDsgYXJyb3dzPSZxdW90OzEmcXVvdDsgZm9sZD0mcXVvdDsxJnF1b3Q7IHBhZ2U9JnF1b3Q7MSZxdW90OyBwYWdlU2NhbGU9JnF1b3Q7MSZxdW90OyBwYWdlV2lkdGg9JnF1b3Q7ODUwJnF1b3Q7IHBhZ2VIZWlnaHQ9JnF1b3Q7MTEwMCZxdW90OyBtYXRoPSZxdW90OzAmcXVvdDsgc2hhZG93PSZxdW90OzAmcXVvdDsmZ3Q7JiMxMDsgICAgICAmbHQ7cm9vdCZndDsmIzEwOyAgICAgICAgJmx0O214Q2VsbCBpZD0mcXVvdDswJnF1b3Q7IC8mZ3Q7JiMxMDsgICAgICAgICZsdDtteENlbGwgaWQ9JnF1b3Q7MSZxdW90OyBwYXJlbnQ9JnF1b3Q7MCZxdW90OyAvJmd0OyYjMTA7ICAgICAgICAmbHQ7bXhDZWxsIGlkPSZxdW90O0VWUlV4RlMzSTN3bGw5TU1xd1AyLTEmcXVvdDsgdmFsdWU9JnF1b3Q7VHJhaW5pbmcgRGF0YSZxdW90OyBzdHlsZT0mcXVvdDtyb3VuZGVkPTE7d2hpdGVTcGFjZT13cmFwO2h0bWw9MTtyb3RhdGlvbj0tOTA7Zm9udFNpemU9MTU7ZmlsbENvbG9yPSNkYWU4ZmM7Z3JhZGllbnRDb2xvcj0jN2VhNmUwO3N0cm9rZUNvbG9yPSM2YzhlYmY7JnF1b3Q7IHBhcmVudD0mcXVvdDsxJnF1b3Q7IHZlcnRleD0mcXVvdDsxJnF1b3Q7Jmd0OyYjMTA7ICAgICAgICAgICZsdDtteEdlb21ldHJ5IHg9JnF1b3Q7MzAmcXVvdDsgeT0mcXVvdDsyMTAmcXVvdDsgd2lkdGg9JnF1b3Q7MTIwJnF1b3Q7IGhlaWdodD0mcXVvdDs2MCZxdW90OyBhcz0mcXVvdDtnZW9tZXRyeSZxdW90OyAvJmd0OyYjMTA7ICAgICAgICAmbHQ7L214Q2VsbCZndDsmIzEwOyAgICAgICAgJmx0O214Q2VsbCBpZD0mcXVvdDtFVlJVeEZTM0kzd2xsOU1NcXdQMi0yJnF1b3Q7IHZhbHVlPSZxdW90O1N1YnNldCAxJnF1b3Q7IHN0eWxlPSZxdW90O3JvdW5kZWQ9MTt3aGl0ZVNwYWNlPXdyYXA7aHRtbD0xO3JvdGF0aW9uPTA7Zm9udFNpemU9MTU7ZmlsbENvbG9yPSNkYWU4ZmM7Z3JhZGllbnRDb2xvcj0jN2VhNmUwO3N0cm9rZUNvbG9yPSM2YzhlYmY7JnF1b3Q7IHBhcmVudD0mcXVvdDsxJnF1b3Q7IHZlcnRleD0mcXVvdDsxJnF1b3Q7Jmd0OyYjMTA7ICAgICAgICAgICZsdDtteEdlb21ldHJ5IHg9JnF1b3Q7MTgwJnF1b3Q7IHk9JnF1b3Q7MTEwJnF1b3Q7IHdpZHRoPSZxdW90OzgwJnF1b3Q7IGhlaWdodD0mcXVvdDs0MCZxdW90OyBhcz0mcXVvdDtnZW9tZXRyeSZxdW90OyAvJmd0OyYjMTA7ICAgICAgICAmbHQ7L214Q2VsbCZndDsmIzEwOyAgICAgICAgJmx0O214Q2VsbCBpZD0mcXVvdDtFVlJVeEZTM0kzd2xsOU1NcXdQMi0zJnF1b3Q7IHZhbHVlPSZxdW90O1N1YnNldCAyJnF1b3Q7IHN0eWxlPSZxdW90O3JvdW5kZWQ9MTt3aGl0ZVNwYWNlPXdyYXA7aHRtbD0xO3JvdGF0aW9uPTA7Zm9udFNpemU9MTU7ZmlsbENvbG9yPSNkYWU4ZmM7Z3JhZGllbnRDb2xvcj0jN2VhNmUwO3N0cm9rZUNvbG9yPSM2YzhlYmY7JnF1b3Q7IHBhcmVudD0mcXVvdDsxJnF1b3Q7IHZlcnRleD0mcXVvdDsxJnF1b3Q7Jmd0OyYjMTA7ICAgICAgICAgICZsdDtteEdlb21ldHJ5IHg9JnF1b3Q7MTgwJnF1b3Q7IHk9JnF1b3Q7MjAwJnF1b3Q7IHdpZHRoPSZxdW90OzgwJnF1b3Q7IGhlaWdodD0mcXVvdDs0MCZxdW90OyBhcz0mcXVvdDtnZW9tZXRyeSZxdW90OyAvJmd0OyYjMTA7ICAgICAgICAmbHQ7L214Q2VsbCZndDsmIzEwOyAgICAgICAgJmx0O214Q2VsbCBpZD0mcXVvdDtFVlJVeEZTM0kzd2xsOU1NcXdQMi00JnF1b3Q7IHZhbHVlPSZxdW90O1N1YnNldCAzJnF1b3Q7IHN0eWxlPSZxdW90O3JvdW5kZWQ9MTt3aGl0ZVNwYWNlPXdyYXA7aHRtbD0xO3JvdGF0aW9uPTA7Zm9udFNpemU9MTU7ZmlsbENvbG9yPSNkYWU4ZmM7Z3JhZGllbnRDb2xvcj0jN2VhNmUwO3N0cm9rZUNvbG9yPSM2YzhlYmY7JnF1b3Q7IHBhcmVudD0mcXVvdDsxJnF1b3Q7IHZlcnRleD0mcXVvdDsxJnF1b3Q7Jmd0OyYjMTA7ICAgICAgICAgICZsdDtteEdlb21ldHJ5IHg9JnF1b3Q7MTgwJnF1b3Q7IHk9JnF1b3Q7MjkwJnF1b3Q7IHdpZHRoPSZxdW90OzgwJnF1b3Q7IGhlaWdodD0mcXVvdDs0MCZxdW90OyBhcz0mcXVvdDtnZW9tZXRyeSZxdW90OyAvJmd0OyYjMTA7ICAgICAgICAmbHQ7L214Q2VsbCZndDsmIzEwOyAgICAgICAgJmx0O214Q2VsbCBpZD0mcXVvdDtFVlJVeEZTM0kzd2xsOU1NcXdQMi01JnF1b3Q7IHZhbHVlPSZxdW90O00xJnF1b3Q7IHN0eWxlPSZxdW90O3JvdW5kZWQ9MDt3aGl0ZVNwYWNlPXdyYXA7aHRtbD0xO2ZpbGxDb2xvcj0jZWVlZWVlO3N0cm9rZUNvbG9yPSMzNjM5M2Q7Zm9udFNpemU9MTU7JnF1b3Q7IHBhcmVudD0mcXVvdDsxJnF1b3Q7IHZlcnRleD0mcXVvdDsxJnF1b3Q7Jmd0OyYjMTA7ICAgICAgICAgICZsdDtteEdlb21ldHJ5IHg9JnF1b3Q7MzQwJnF1b3Q7IHk9JnF1b3Q7MTE1JnF1b3Q7IHdpZHRoPSZxdW90OzQwJnF1b3Q7IGhlaWdodD0mcXVvdDszMCZxdW90OyBhcz0mcXVvdDtnZW9tZXRyeSZxdW90OyAvJmd0OyYjMTA7ICAgICAgICAmbHQ7L214Q2VsbCZndDsmIzEwOyAgICAgICAgJmx0O214Q2VsbCBpZD0mcXVvdDtFVlJVeEZTM0kzd2xsOU1NcXdQMi02JnF1b3Q7IHZhbHVlPSZxdW90O00yJnF1b3Q7IHN0eWxlPSZxdW90O3JvdW5kZWQ9MDt3aGl0ZVNwYWNlPXdyYXA7aHRtbD0xO2ZpbGxDb2xvcj0jZWVlZWVlO3N0cm9rZUNvbG9yPSMzNjM5M2Q7Zm9udFNpemU9MTU7JnF1b3Q7IHBhcmVudD0mcXVvdDsxJnF1b3Q7IHZlcnRleD0mcXVvdDsxJnF1b3Q7Jmd0OyYjMTA7ICAgICAgICAgICZsdDtteEdlb21ldHJ5IHg9JnF1b3Q7MzQwJnF1b3Q7IHk9JnF1b3Q7MjA1JnF1b3Q7IHdpZHRoPSZxdW90OzQwJnF1b3Q7IGhlaWdodD0mcXVvdDszMCZxdW90OyBhcz0mcXVvdDtnZW9tZXRyeSZxdW90OyAvJmd0OyYjMTA7ICAgICAgICAmbHQ7L214Q2VsbCZndDsmIzEwOyAgICAgICAgJmx0O214Q2VsbCBpZD0mcXVvdDtFVlJVeEZTM0kzd2xsOU1NcXdQMi03JnF1b3Q7IHZhbHVlPSZxdW90O00zJnF1b3Q7IHN0eWxlPSZxdW90O3JvdW5kZWQ9MDt3aGl0ZVNwYWNlPXdyYXA7aHRtbD0xO2ZpbGxDb2xvcj0jZWVlZWVlO3N0cm9rZUNvbG9yPSMzNjM5M2Q7Zm9udFNpemU9MTU7JnF1b3Q7IHBhcmVudD0mcXVvdDsxJnF1b3Q7IHZlcnRleD0mcXVvdDsxJnF1b3Q7Jmd0OyYjMTA7ICAgICAgICAgICZsdDtteEdlb21ldHJ5IHg9JnF1b3Q7MzQwJnF1b3Q7IHk9JnF1b3Q7Mjk1JnF1b3Q7IHdpZHRoPSZxdW90OzQwJnF1b3Q7IGhlaWdodD0mcXVvdDszMCZxdW90OyBhcz0mcXVvdDtnZW9tZXRyeSZxdW90OyAvJmd0OyYjMTA7ICAgICAgICAmbHQ7L214Q2VsbCZndDsmIzEwOyAgICAgICAgJmx0O214Q2VsbCBpZD0mcXVvdDtFVlJVeEZTM0kzd2xsOU1NcXdQMi04JnF1b3Q7IHZhbHVlPSZxdW90O0ZpbmFsIFByZWRpY3Rpb24mcXVvdDsgc3R5bGU9JnF1b3Q7cm91bmRlZD0wO3doaXRlU3BhY2U9d3JhcDtodG1sPTE7Zm9udFNpemU9MTU7JnF1b3Q7IHBhcmVudD0mcXVvdDsxJnF1b3Q7IHZlcnRleD0mcXVvdDsxJnF1b3Q7Jmd0OyYjMTA7ICAgICAgICAgICZsdDtteEdlb21ldHJ5IHg9JnF1b3Q7NTIwJnF1b3Q7IHk9JnF1b3Q7MjEwJnF1b3Q7IHdpZHRoPSZxdW90OzE0MCZxdW90OyBoZWlnaHQ9JnF1b3Q7MzUmcXVvdDsgYXM9JnF1b3Q7Z2VvbWV0cnkmcXVvdDsgLyZndDsmIzEwOyAgICAgICAgJmx0Oy9teENlbGwmZ3Q7JiMxMDsgICAgICAgICZsdDtteENlbGwgaWQ9JnF1b3Q7RVZSVXhGUzNJM3dsbDlNTXF3UDItOSZxdW90OyB2YWx1ZT0mcXVvdDsmcXVvdDsgc3R5bGU9JnF1b3Q7ZW5kQXJyb3c9Y2xhc3NpYztodG1sPTE7cm91bmRlZD0wO2V4aXRYPTAuNjc1O2V4aXRZPTAuOTY3O2V4aXREeD0wO2V4aXREeT0wO2V4aXRQZXJpbWV0ZXI9MDtlbnRyeVg9MDtlbnRyeVk9MC41O2VudHJ5RHg9MDtlbnRyeUR5PTA7JnF1b3Q7IHBhcmVudD0mcXVvdDsxJnF1b3Q7IHNvdXJjZT0mcXVvdDtFVlJVeEZTM0kzd2xsOU1NcXdQMi0xJnF1b3Q7IHRhcmdldD0mcXVvdDtFVlJVeEZTM0kzd2xsOU1NcXdQMi0zJnF1b3Q7IGVkZ2U9JnF1b3Q7MSZxdW90OyZndDsmIzEwOyAgICAgICAgICAmbHQ7bXhHZW9tZXRyeSB3aWR0aD0mcXVvdDs1MCZxdW90OyBoZWlnaHQ9JnF1b3Q7NTAmcXVvdDsgcmVsYXRpdmU9JnF1b3Q7MSZxdW90OyBhcz0mcXVvdDtnZW9tZXRyeSZxdW90OyZndDsmIzEwOyAgICAgICAgICAgICZsdDtteFBvaW50IHg9JnF1b3Q7NDAwJnF1b3Q7IHk9JnF1b3Q7MzMwJnF1b3Q7IGFzPSZxdW90O3NvdXJjZVBvaW50JnF1b3Q7IC8mZ3Q7JiMxMDsgICAgICAgICAgICAmbHQ7bXhQb2ludCB4PSZxdW90OzQ1MCZxdW90OyB5PSZxdW90OzI4MCZxdW90OyBhcz0mcXVvdDt0YXJnZXRQb2ludCZxdW90OyAvJmd0OyYjMTA7ICAgICAgICAgICZsdDsvbXhHZW9tZXRyeSZndDsmIzEwOyAgICAgICAgJmx0Oy9teENlbGwmZ3Q7JiMxMDsgICAgICAgICZsdDtteENlbGwgaWQ9JnF1b3Q7RVZSVXhGUzNJM3dsbDlNTXF3UDItMTAmcXVvdDsgdmFsdWU9JnF1b3Q7JnF1b3Q7IHN0eWxlPSZxdW90O2VuZEFycm93PW5vbmU7aHRtbD0xO3JvdW5kZWQ9MDsmcXVvdDsgcGFyZW50PSZxdW90OzEmcXVvdDsgZWRnZT0mcXVvdDsxJnF1b3Q7Jmd0OyYjMTA7ICAgICAgICAgICZsdDtteEdlb21ldHJ5IHdpZHRoPSZxdW90OzUwJnF1b3Q7IGhlaWdodD0mcXVvdDs1MCZxdW90OyByZWxhdGl2ZT0mcXVvdDsxJnF1b3Q7IGFzPSZxdW90O2dlb21ldHJ5JnF1b3Q7Jmd0OyYjMTA7ICAgICAgICAgICAgJmx0O214UG9pbnQgeD0mcXVvdDsxNDAmcXVvdDsgeT0mcXVvdDszMjAmcXVvdDsgYXM9JnF1b3Q7c291cmNlUG9pbnQmcXVvdDsgLyZndDsmIzEwOyAgICAgICAgICAgICZsdDtteFBvaW50IHg9JnF1b3Q7MTQwJnF1b3Q7IHk9JnF1b3Q7MTIwJnF1b3Q7IGFzPSZxdW90O3RhcmdldFBvaW50JnF1b3Q7IC8mZ3Q7JiMxMDsgICAgICAgICAgJmx0Oy9teEdlb21ldHJ5Jmd0OyYjMTA7ICAgICAgICAmbHQ7L214Q2VsbCZndDsmIzEwOyAgICAgICAgJmx0O214Q2VsbCBpZD0mcXVvdDtFVlJVeEZTM0kzd2xsOU1NcXdQMi0xMSZxdW90OyB2YWx1ZT0mcXVvdDsmcXVvdDsgc3R5bGU9JnF1b3Q7ZW5kQXJyb3c9Y2xhc3NpYztodG1sPTE7cm91bmRlZD0wO2VudHJ5WD0wO2VudHJ5WT0wLjI1O2VudHJ5RHg9MDtlbnRyeUR5PTA7JnF1b3Q7IHBhcmVudD0mcXVvdDsxJnF1b3Q7IHRhcmdldD0mcXVvdDtFVlJVeEZTM0kzd2xsOU1NcXdQMi0yJnF1b3Q7IGVkZ2U9JnF1b3Q7MSZxdW90OyZndDsmIzEwOyAgICAgICAgICAmbHQ7bXhHZW9tZXRyeSB3aWR0aD0mcXVvdDs1MCZxdW90OyBoZWlnaHQ9JnF1b3Q7NTAmcXVvdDsgcmVsYXRpdmU9JnF1b3Q7MSZxdW90OyBhcz0mcXVvdDtnZW9tZXRyeSZxdW90OyZndDsmIzEwOyAgICAgICAgICAgICZsdDtteFBvaW50IHg9JnF1b3Q7MTQwJnF1b3Q7IHk9JnF1b3Q7MTIwJnF1b3Q7IGFzPSZxdW90O3NvdXJjZVBvaW50JnF1b3Q7IC8mZ3Q7JiMxMDsgICAgICAgICAgICAmbHQ7bXhQb2ludCB4PSZxdW90OzQ1MCZxdW90OyB5PSZxdW90OzI4MCZxdW90OyBhcz0mcXVvdDt0YXJnZXRQb2ludCZxdW90OyAvJmd0OyYjMTA7ICAgICAgICAgICZsdDsvbXhHZW9tZXRyeSZndDsmIzEwOyAgICAgICAgJmx0Oy9teENlbGwmZ3Q7JiMxMDsgICAgICAgICZsdDtteENlbGwgaWQ9JnF1b3Q7RVZSVXhGUzNJM3dsbDlNTXF3UDItMTImcXVvdDsgdmFsdWU9JnF1b3Q7JnF1b3Q7IHN0eWxlPSZxdW90O2VuZEFycm93PWNsYXNzaWM7aHRtbD0xO3JvdW5kZWQ9MDtlbnRyeVg9MDtlbnRyeVk9MC43NTtlbnRyeUR4PTA7ZW50cnlEeT0wOyZxdW90OyBwYXJlbnQ9JnF1b3Q7MSZxdW90OyB0YXJnZXQ9JnF1b3Q7RVZSVXhGUzNJM3dsbDlNTXF3UDItNCZxdW90OyBlZGdlPSZxdW90OzEmcXVvdDsmZ3Q7JiMxMDsgICAgICAgICAgJmx0O214R2VvbWV0cnkgd2lkdGg9JnF1b3Q7NTAmcXVvdDsgaGVpZ2h0PSZxdW90OzUwJnF1b3Q7IHJlbGF0aXZlPSZxdW90OzEmcXVvdDsgYXM9JnF1b3Q7Z2VvbWV0cnkmcXVvdDsmZ3Q7JiMxMDsgICAgICAgICAgICAmbHQ7bXhQb2ludCB4PSZxdW90OzE0MCZxdW90OyB5PSZxdW90OzMyMCZxdW90OyBhcz0mcXVvdDtzb3VyY2VQb2ludCZxdW90OyAvJmd0OyYjMTA7ICAgICAgICAgICAgJmx0O214UG9pbnQgeD0mcXVvdDs0NTAmcXVvdDsgeT0mcXVvdDsyODAmcXVvdDsgYXM9JnF1b3Q7dGFyZ2V0UG9pbnQmcXVvdDsgLyZndDsmIzEwOyAgICAgICAgICAmbHQ7L214R2VvbWV0cnkmZ3Q7JiMxMDsgICAgICAgICZsdDsvbXhDZWxsJmd0OyYjMTA7ICAgICAgICAmbHQ7bXhDZWxsIGlkPSZxdW90O0VWUlV4RlMzSTN3bGw5TU1xd1AyLTEzJnF1b3Q7IHZhbHVlPSZxdW90OyZxdW90OyBzdHlsZT0mcXVvdDtlbmRBcnJvdz1jbGFzc2ljO2h0bWw9MTtyb3VuZGVkPTA7ZXhpdFg9MTtleGl0WT0wLjU7ZXhpdER4PTA7ZXhpdER5PTA7ZW50cnlYPTA7ZW50cnlZPTAuNTtlbnRyeUR4PTA7ZW50cnlEeT0wOyZxdW90OyBwYXJlbnQ9JnF1b3Q7MSZxdW90OyBzb3VyY2U9JnF1b3Q7RVZSVXhGUzNJM3dsbDlNTXF3UDItMiZxdW90OyB0YXJnZXQ9JnF1b3Q7RVZSVXhGUzNJM3dsbDlNTXF3UDItNSZxdW90OyBlZGdlPSZxdW90OzEmcXVvdDsmZ3Q7JiMxMDsgICAgICAgICAgJmx0O214R2VvbWV0cnkgd2lkdGg9JnF1b3Q7NTAmcXVvdDsgaGVpZ2h0PSZxdW90OzUwJnF1b3Q7IHJlbGF0aXZlPSZxdW90OzEmcXVvdDsgYXM9JnF1b3Q7Z2VvbWV0cnkmcXVvdDsmZ3Q7JiMxMDsgICAgICAgICAgICAmbHQ7bXhQb2ludCB4PSZxdW90OzQwMCZxdW90OyB5PSZxdW90OzMzMCZxdW90OyBhcz0mcXVvdDtzb3VyY2VQb2ludCZxdW90OyAvJmd0OyYjMTA7ICAgICAgICAgICAgJmx0O214UG9pbnQgeD0mcXVvdDs0NTAmcXVvdDsgeT0mcXVvdDsyODAmcXVvdDsgYXM9JnF1b3Q7dGFyZ2V0UG9pbnQmcXVvdDsgLyZndDsmIzEwOyAgICAgICAgICAmbHQ7L214R2VvbWV0cnkmZ3Q7JiMxMDsgICAgICAgICZsdDsvbXhDZWxsJmd0OyYjMTA7ICAgICAgICAmbHQ7bXhDZWxsIGlkPSZxdW90O0VWUlV4RlMzSTN3bGw5TU1xd1AyLTE0JnF1b3Q7IHZhbHVlPSZxdW90OyZxdW90OyBzdHlsZT0mcXVvdDtlbmRBcnJvdz1jbGFzc2ljO2h0bWw9MTtyb3VuZGVkPTA7ZXhpdFg9MTtleGl0WT0wLjU7ZXhpdER4PTA7ZXhpdER5PTA7ZW50cnlYPTA7ZW50cnlZPTAuNTtlbnRyeUR4PTA7ZW50cnlEeT0wOyZxdW90OyBwYXJlbnQ9JnF1b3Q7MSZxdW90OyBzb3VyY2U9JnF1b3Q7RVZSVXhGUzNJM3dsbDlNTXF3UDItMyZxdW90OyB0YXJnZXQ9JnF1b3Q7RVZSVXhGUzNJM3dsbDlNTXF3UDItNiZxdW90OyBlZGdlPSZxdW90OzEmcXVvdDsmZ3Q7JiMxMDsgICAgICAgICAgJmx0O214R2VvbWV0cnkgd2lkdGg9JnF1b3Q7NTAmcXVvdDsgaGVpZ2h0PSZxdW90OzUwJnF1b3Q7IHJlbGF0aXZlPSZxdW90OzEmcXVvdDsgYXM9JnF1b3Q7Z2VvbWV0cnkmcXVvdDsmZ3Q7JiMxMDsgICAgICAgICAgICAmbHQ7bXhQb2ludCB4PSZxdW90OzQwMCZxdW90OyB5PSZxdW90OzMzMCZxdW90OyBhcz0mcXVvdDtzb3VyY2VQb2ludCZxdW90OyAvJmd0OyYjMTA7ICAgICAgICAgICAgJmx0O214UG9pbnQgeD0mcXVvdDs0NTAmcXVvdDsgeT0mcXVvdDsyODAmcXVvdDsgYXM9JnF1b3Q7dGFyZ2V0UG9pbnQmcXVvdDsgLyZndDsmIzEwOyAgICAgICAgICAmbHQ7L214R2VvbWV0cnkmZ3Q7JiMxMDsgICAgICAgICZsdDsvbXhDZWxsJmd0OyYjMTA7ICAgICAgICAmbHQ7bXhDZWxsIGlkPSZxdW90O0VWUlV4RlMzSTN3bGw5TU1xd1AyLTE1JnF1b3Q7IHZhbHVlPSZxdW90OyZxdW90OyBzdHlsZT0mcXVvdDtlbmRBcnJvdz1jbGFzc2ljO2h0bWw9MTtyb3VuZGVkPTA7JnF1b3Q7IHBhcmVudD0mcXVvdDsxJnF1b3Q7IHNvdXJjZT0mcXVvdDtFVlJVeEZTM0kzd2xsOU1NcXdQMi00JnF1b3Q7IHRhcmdldD0mcXVvdDtFVlJVeEZTM0kzd2xsOU1NcXdQMi03JnF1b3Q7IGVkZ2U9JnF1b3Q7MSZxdW90OyZndDsmIzEwOyAgICAgICAgICAmbHQ7bXhHZW9tZXRyeSB3aWR0aD0mcXVvdDs1MCZxdW90OyBoZWlnaHQ9JnF1b3Q7NTAmcXVvdDsgcmVsYXRpdmU9JnF1b3Q7MSZxdW90OyBhcz0mcXVvdDtnZW9tZXRyeSZxdW90OyZndDsmIzEwOyAgICAgICAgICAgICZsdDtteFBvaW50IHg9JnF1b3Q7NDAwJnF1b3Q7IHk9JnF1b3Q7MzMwJnF1b3Q7IGFzPSZxdW90O3NvdXJjZVBvaW50JnF1b3Q7IC8mZ3Q7JiMxMDsgICAgICAgICAgICAmbHQ7bXhQb2ludCB4PSZxdW90OzQ1MCZxdW90OyB5PSZxdW90OzI4MCZxdW90OyBhcz0mcXVvdDt0YXJnZXRQb2ludCZxdW90OyAvJmd0OyYjMTA7ICAgICAgICAgICZsdDsvbXhHZW9tZXRyeSZndDsmIzEwOyAgICAgICAgJmx0Oy9teENlbGwmZ3Q7JiMxMDsgICAgICAgICZsdDtteENlbGwgaWQ9JnF1b3Q7RVZSVXhGUzNJM3dsbDlNTXF3UDItMTYmcXVvdDsgdmFsdWU9JnF1b3Q7JnF1b3Q7IHN0eWxlPSZxdW90O2VuZEFycm93PWNsYXNzaWM7aHRtbD0xO3JvdW5kZWQ9MDtleGl0WD0xO2V4aXRZPTAuNzU7ZXhpdER4PTA7ZXhpdER5PTA7ZW50cnlYPTA7ZW50cnlZPTA7ZW50cnlEeD0wO2VudHJ5RHk9MDsmcXVvdDsgcGFyZW50PSZxdW90OzEmcXVvdDsgc291cmNlPSZxdW90O0VWUlV4RlMzSTN3bGw5TU1xd1AyLTUmcXVvdDsgdGFyZ2V0PSZxdW90O0VWUlV4RlMzSTN3bGw5TU1xd1AyLTgmcXVvdDsgZWRnZT0mcXVvdDsxJnF1b3Q7Jmd0OyYjMTA7ICAgICAgICAgICZsdDtteEdlb21ldHJ5IHdpZHRoPSZxdW90OzUwJnF1b3Q7IGhlaWdodD0mcXVvdDs1MCZxdW90OyByZWxhdGl2ZT0mcXVvdDsxJnF1b3Q7IGFzPSZxdW90O2dlb21ldHJ5JnF1b3Q7Jmd0OyYjMTA7ICAgICAgICAgICAgJmx0O214UG9pbnQgeD0mcXVvdDs0MDAmcXVvdDsgeT0mcXVvdDszMzAmcXVvdDsgYXM9JnF1b3Q7c291cmNlUG9pbnQmcXVvdDsgLyZndDsmIzEwOyAgICAgICAgICAgICZsdDtteFBvaW50IHg9JnF1b3Q7NDUwJnF1b3Q7IHk9JnF1b3Q7MjgwJnF1b3Q7IGFzPSZxdW90O3RhcmdldFBvaW50JnF1b3Q7IC8mZ3Q7JiMxMDsgICAgICAgICAgJmx0Oy9teEdlb21ldHJ5Jmd0OyYjMTA7ICAgICAgICAmbHQ7L214Q2VsbCZndDsmIzEwOyAgICAgICAgJmx0O214Q2VsbCBpZD0mcXVvdDtFVlJVeEZTM0kzd2xsOU1NcXdQMi0xNyZxdW90OyB2YWx1ZT0mcXVvdDsmcXVvdDsgc3R5bGU9JnF1b3Q7ZW5kQXJyb3c9Y2xhc3NpYztodG1sPTE7cm91bmRlZD0wO2V4aXRYPTE7ZXhpdFk9MC41O2V4aXREeD0wO2V4aXREeT0wO2VudHJ5WD0wO2VudHJ5WT0wLjI1O2VudHJ5RHg9MDtlbnRyeUR5PTA7JnF1b3Q7IHBhcmVudD0mcXVvdDsxJnF1b3Q7IHNvdXJjZT0mcXVvdDtFVlJVeEZTM0kzd2xsOU1NcXdQMi02JnF1b3Q7IHRhcmdldD0mcXVvdDtFVlJVeEZTM0kzd2xsOU1NcXdQMi04JnF1b3Q7IGVkZ2U9JnF1b3Q7MSZxdW90OyZndDsmIzEwOyAgICAgICAgICAmbHQ7bXhHZW9tZXRyeSB3aWR0aD0mcXVvdDs1MCZxdW90OyBoZWlnaHQ9JnF1b3Q7NTAmcXVvdDsgcmVsYXRpdmU9JnF1b3Q7MSZxdW90OyBhcz0mcXVvdDtnZW9tZXRyeSZxdW90OyZndDsmIzEwOyAgICAgICAgICAgICZsdDtteFBvaW50IHg9JnF1b3Q7NDAwJnF1b3Q7IHk9JnF1b3Q7MzMwJnF1b3Q7IGFzPSZxdW90O3NvdXJjZVBvaW50JnF1b3Q7IC8mZ3Q7JiMxMDsgICAgICAgICAgICAmbHQ7bXhQb2ludCB4PSZxdW90OzQ1MCZxdW90OyB5PSZxdW90OzI4MCZxdW90OyBhcz0mcXVvdDt0YXJnZXRQb2ludCZxdW90OyAvJmd0OyYjMTA7ICAgICAgICAgICZsdDsvbXhHZW9tZXRyeSZndDsmIzEwOyAgICAgICAgJmx0Oy9teENlbGwmZ3Q7JiMxMDsgICAgICAgICZsdDtteENlbGwgaWQ9JnF1b3Q7RVZSVXhGUzNJM3dsbDlNTXF3UDItMTgmcXVvdDsgdmFsdWU9JnF1b3Q7JnF1b3Q7IHN0eWxlPSZxdW90O2VuZEFycm93PWNsYXNzaWM7aHRtbD0xO3JvdW5kZWQ9MDtleGl0WD0xO2V4aXRZPTAuMjU7ZXhpdER4PTA7ZXhpdER5PTA7ZW50cnlYPTA7ZW50cnlZPTAuNTtlbnRyeUR4PTA7ZW50cnlEeT0wOyZxdW90OyBwYXJlbnQ9JnF1b3Q7MSZxdW90OyBzb3VyY2U9JnF1b3Q7RVZSVXhGUzNJM3dsbDlNTXF3UDItNyZxdW90OyB0YXJnZXQ9JnF1b3Q7RVZSVXhGUzNJM3dsbDlNTXF3UDItOCZxdW90OyBlZGdlPSZxdW90OzEmcXVvdDsmZ3Q7JiMxMDsgICAgICAgICAgJmx0O214R2VvbWV0cnkgd2lkdGg9JnF1b3Q7NTAmcXVvdDsgaGVpZ2h0PSZxdW90OzUwJnF1b3Q7IHJlbGF0aXZlPSZxdW90OzEmcXVvdDsgYXM9JnF1b3Q7Z2VvbWV0cnkmcXVvdDsmZ3Q7JiMxMDsgICAgICAgICAgICAmbHQ7bXhQb2ludCB4PSZxdW90OzQwMCZxdW90OyB5PSZxdW90OzMzMCZxdW90OyBhcz0mcXVvdDtzb3VyY2VQb2ludCZxdW90OyAvJmd0OyYjMTA7ICAgICAgICAgICAgJmx0O214UG9pbnQgeD0mcXVvdDs0NTAmcXVvdDsgeT0mcXVvdDsyODAmcXVvdDsgYXM9JnF1b3Q7dGFyZ2V0UG9pbnQmcXVvdDsgLyZndDsmIzEwOyAgICAgICAgICAmbHQ7L214R2VvbWV0cnkmZ3Q7JiMxMDsgICAgICAgICZsdDsvbXhDZWxsJmd0OyYjMTA7ICAgICAgJmx0Oy9yb290Jmd0OyYjMTA7ICAgICZsdDsvbXhHcmFwaE1vZGVsJmd0OyYjMTA7ICAmbHQ7L2RpYWdyYW0mZ3Q7JiMxMDsmbHQ7L214ZmlsZSZndDsmIzEwOyI+PGRlZnM+PGxpbmVhckdyYWRpZW50IHgxPSIwJSIgeTE9IjAlIiB4Mj0iMCUiIHkyPSIxMDAlIiBpZD0ibXgtZ3JhZGllbnQtZGFlOGZjLTEtN2VhNmUwLTEtcy0wIj48c3RvcCBvZmZzZXQ9IjAlIiBzdHlsZT0ic3RvcC1jb2xvcjogcmdiKDIxOCwgMjMyLCAyNTIpOyBzdG9wLW9wYWNpdHk6IDE7Ii8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdHlsZT0ic3RvcC1jb2xvcjogcmdiKDEyNiwgMTY2LCAyMjQpOyBzdG9wLW9wYWNpdHk6IDE7Ii8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PGc+PHJlY3QgeD0iLTMwIiB5PSIxMDAiIHdpZHRoPSIxMjAiIGhlaWdodD0iNjAiIHJ4PSI5IiByeT0iOSIgZmlsbD0idXJsKCNteC1ncmFkaWVudC1kYWU4ZmMtMS03ZWE2ZTAtMS1zLTApIiBzdHJva2U9IiM2YzhlYmYiIHRyYW5zZm9ybT0icm90YXRlKC05MCwzMCwxMzApIiBwb2ludGVyLWV2ZW50cz0iYWxsIi8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTAuNSAtMC41KXJvdGF0ZSgtOTAgMzAgMTMwKSI+PHN3aXRjaD48Zm9yZWlnbk9iamVjdCBwb2ludGVyLWV2ZW50cz0ibm9uZSIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgcmVxdWlyZWRGZWF0dXJlcz0iaHR0cDovL3d3dy53My5vcmcvVFIvU1ZHMTEvZmVhdHVyZSNFeHRlbnNpYmlsaXR5IiBzdHlsZT0ib3ZlcmZsb3c6IHZpc2libGU7IHRleHQtYWxpZ246IGxlZnQ7Ij48ZGl2IHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hodG1sIiBzdHlsZT0iZGlzcGxheTogZmxleDsgYWxpZ24taXRlbXM6IHVuc2FmZSBjZW50ZXI7IGp1c3RpZnktY29udGVudDogdW5zYWZlIGNlbnRlcjsgd2lkdGg6IDExOHB4OyBoZWlnaHQ6IDFweDsgcGFkZGluZy10b3A6IDEzMHB4OyBtYXJnaW4tbGVmdDogLTI5cHg7Ij48ZGl2IGRhdGEtZHJhd2lvLWNvbG9ycz0iY29sb3I6IHJnYigwLCAwLCAwKTsgIiBzdHlsZT0iYm94LXNpemluZzogYm9yZGVyLWJveDsgZm9udC1zaXplOiAwcHg7IHRleHQtYWxpZ246IGNlbnRlcjsiPjxkaXYgc3R5bGU9ImRpc3BsYXk6IGlubGluZS1ibG9jazsgZm9udC1zaXplOiAxNXB4OyBmb250LWZhbWlseTogSGVsdmV0aWNhOyBjb2xvcjogcmdiKDAsIDAsIDApOyBsaW5lLWhlaWdodDogMS4yOyBwb2ludGVyLWV2ZW50czogYWxsOyB3aGl0ZS1zcGFjZTogbm9ybWFsOyBvdmVyZmxvdy13cmFwOiBub3JtYWw7Ij5UcmFpbmluZyBEYXRhPC9kaXY+PC9kaXY+PC9kaXY+PC9mb3JlaWduT2JqZWN0Pjx0ZXh0IHg9IjMwIiB5PSIxMzUiIGZpbGw9InJnYigwLCAwLCAwKSIgZm9udC1mYW1pbHk9IkhlbHZldGljYSIgZm9udC1zaXplPSIxNXB4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5UcmFpbmluZyBEYXRhPC90ZXh0Pjwvc3dpdGNoPjwvZz48cmVjdCB4PSIxMjAiIHk9IjAiIHdpZHRoPSI4MCIgaGVpZ2h0PSI0MCIgcng9IjYiIHJ5PSI2IiBmaWxsPSJ1cmwoI214LWdyYWRpZW50LWRhZThmYy0xLTdlYTZlMC0xLXMtMCkiIHN0cm9rZT0iIzZjOGViZiIgcG9pbnRlci1ldmVudHM9ImFsbCIvPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0wLjUgLTAuNSkiPjxzd2l0Y2g+PGZvcmVpZ25PYmplY3QgcG9pbnRlci1ldmVudHM9Im5vbmUiIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHJlcXVpcmVkRmVhdHVyZXM9Imh0dHA6Ly93d3cudzMub3JnL1RSL1NWRzExL2ZlYXR1cmUjRXh0ZW5zaWJpbGl0eSIgc3R5bGU9Im92ZXJmbG93OiB2aXNpYmxlOyB0ZXh0LWFsaWduOiBsZWZ0OyI+PGRpdiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94aHRtbCIgc3R5bGU9ImRpc3BsYXk6IGZsZXg7IGFsaWduLWl0ZW1zOiB1bnNhZmUgY2VudGVyOyBqdXN0aWZ5LWNvbnRlbnQ6IHVuc2FmZSBjZW50ZXI7IHdpZHRoOiA3OHB4OyBoZWlnaHQ6IDFweDsgcGFkZGluZy10b3A6IDIwcHg7IG1hcmdpbi1sZWZ0OiAxMjFweDsiPjxkaXYgZGF0YS1kcmF3aW8tY29sb3JzPSJjb2xvcjogcmdiKDAsIDAsIDApOyAiIHN0eWxlPSJib3gtc2l6aW5nOiBib3JkZXItYm94OyBmb250LXNpemU6IDBweDsgdGV4dC1hbGlnbjogY2VudGVyOyI+PGRpdiBzdHlsZT0iZGlzcGxheTogaW5saW5lLWJsb2NrOyBmb250LXNpemU6IDE1cHg7IGZvbnQtZmFtaWx5OiBIZWx2ZXRpY2E7IGNvbG9yOiByZ2IoMCwgMCwgMCk7IGxpbmUtaGVpZ2h0OiAxLjI7IHBvaW50ZXItZXZlbnRzOiBhbGw7IHdoaXRlLXNwYWNlOiBub3JtYWw7IG92ZXJmbG93LXdyYXA6IG5vcm1hbDsiPlN1YnNldCAxPC9kaXY+PC9kaXY+PC9kaXY+PC9mb3JlaWduT2JqZWN0Pjx0ZXh0IHg9IjE2MCIgeT0iMjUiIGZpbGw9InJnYigwLCAwLCAwKSIgZm9udC1mYW1pbHk9IkhlbHZldGljYSIgZm9udC1zaXplPSIxNXB4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5TdWJzZXQgMTwvdGV4dD48L3N3aXRjaD48L2c+PHJlY3QgeD0iMTIwIiB5PSI5MCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjQwIiByeD0iNiIgcnk9IjYiIGZpbGw9InVybCgjbXgtZ3JhZGllbnQtZGFlOGZjLTEtN2VhNmUwLTEtcy0wKSIgc3Ryb2tlPSIjNmM4ZWJmIiBwb2ludGVyLWV2ZW50cz0iYWxsIi8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTAuNSAtMC41KSI+PHN3aXRjaD48Zm9yZWlnbk9iamVjdCBwb2ludGVyLWV2ZW50cz0ibm9uZSIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgcmVxdWlyZWRGZWF0dXJlcz0iaHR0cDovL3d3dy53My5vcmcvVFIvU1ZHMTEvZmVhdHVyZSNFeHRlbnNpYmlsaXR5IiBzdHlsZT0ib3ZlcmZsb3c6IHZpc2libGU7IHRleHQtYWxpZ246IGxlZnQ7Ij48ZGl2IHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hodG1sIiBzdHlsZT0iZGlzcGxheTogZmxleDsgYWxpZ24taXRlbXM6IHVuc2FmZSBjZW50ZXI7IGp1c3RpZnktY29udGVudDogdW5zYWZlIGNlbnRlcjsgd2lkdGg6IDc4cHg7IGhlaWdodDogMXB4OyBwYWRkaW5nLXRvcDogMTEwcHg7IG1hcmdpbi1sZWZ0OiAxMjFweDsiPjxkaXYgZGF0YS1kcmF3aW8tY29sb3JzPSJjb2xvcjogcmdiKDAsIDAsIDApOyAiIHN0eWxlPSJib3gtc2l6aW5nOiBib3JkZXItYm94OyBmb250LXNpemU6IDBweDsgdGV4dC1hbGlnbjogY2VudGVyOyI+PGRpdiBzdHlsZT0iZGlzcGxheTogaW5saW5lLWJsb2NrOyBmb250LXNpemU6IDE1cHg7IGZvbnQtZmFtaWx5OiBIZWx2ZXRpY2E7IGNvbG9yOiByZ2IoMCwgMCwgMCk7IGxpbmUtaGVpZ2h0OiAxLjI7IHBvaW50ZXItZXZlbnRzOiBhbGw7IHdoaXRlLXNwYWNlOiBub3JtYWw7IG92ZXJmbG93LXdyYXA6IG5vcm1hbDsiPlN1YnNldCAyPC9kaXY+PC9kaXY+PC9kaXY+PC9mb3JlaWduT2JqZWN0Pjx0ZXh0IHg9IjE2MCIgeT0iMTE1IiBmaWxsPSJyZ2IoMCwgMCwgMCkiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EiIGZvbnQtc2l6ZT0iMTVweCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+U3Vic2V0IDI8L3RleHQ+PC9zd2l0Y2g+PC9nPjxyZWN0IHg9IjEyMCIgeT0iMTgwIiB3aWR0aD0iODAiIGhlaWdodD0iNDAiIHJ4PSI2IiByeT0iNiIgZmlsbD0idXJsKCNteC1ncmFkaWVudC1kYWU4ZmMtMS03ZWE2ZTAtMS1zLTApIiBzdHJva2U9IiM2YzhlYmYiIHBvaW50ZXItZXZlbnRzPSJhbGwiLz48ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMC41IC0wLjUpIj48c3dpdGNoPjxmb3JlaWduT2JqZWN0IHBvaW50ZXItZXZlbnRzPSJub25lIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiByZXF1aXJlZEZlYXR1cmVzPSJodHRwOi8vd3d3LnczLm9yZy9UUi9TVkcxMS9mZWF0dXJlI0V4dGVuc2liaWxpdHkiIHN0eWxlPSJvdmVyZmxvdzogdmlzaWJsZTsgdGV4dC1hbGlnbjogbGVmdDsiPjxkaXYgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGh0bWwiIHN0eWxlPSJkaXNwbGF5OiBmbGV4OyBhbGlnbi1pdGVtczogdW5zYWZlIGNlbnRlcjsganVzdGlmeS1jb250ZW50OiB1bnNhZmUgY2VudGVyOyB3aWR0aDogNzhweDsgaGVpZ2h0OiAxcHg7IHBhZGRpbmctdG9wOiAyMDBweDsgbWFyZ2luLWxlZnQ6IDEyMXB4OyI+PGRpdiBkYXRhLWRyYXdpby1jb2xvcnM9ImNvbG9yOiByZ2IoMCwgMCwgMCk7ICIgc3R5bGU9ImJveC1zaXppbmc6IGJvcmRlci1ib3g7IGZvbnQtc2l6ZTogMHB4OyB0ZXh0LWFsaWduOiBjZW50ZXI7Ij48ZGl2IHN0eWxlPSJkaXNwbGF5OiBpbmxpbmUtYmxvY2s7IGZvbnQtc2l6ZTogMTVweDsgZm9udC1mYW1pbHk6IEhlbHZldGljYTsgY29sb3I6IHJnYigwLCAwLCAwKTsgbGluZS1oZWlnaHQ6IDEuMjsgcG9pbnRlci1ldmVudHM6IGFsbDsgd2hpdGUtc3BhY2U6IG5vcm1hbDsgb3ZlcmZsb3ctd3JhcDogbm9ybWFsOyI+U3Vic2V0IDM8L2Rpdj48L2Rpdj48L2Rpdj48L2ZvcmVpZ25PYmplY3Q+PHRleHQgeD0iMTYwIiB5PSIyMDUiIGZpbGw9InJnYigwLCAwLCAwKSIgZm9udC1mYW1pbHk9IkhlbHZldGljYSIgZm9udC1zaXplPSIxNXB4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5TdWJzZXQgMzwvdGV4dD48L3N3aXRjaD48L2c+PHJlY3QgeD0iMjgwIiB5PSI1IiB3aWR0aD0iNDAiIGhlaWdodD0iMzAiIGZpbGw9IiNlZWVlZWUiIHN0cm9rZT0iIzM2MzkzZCIgcG9pbnRlci1ldmVudHM9ImFsbCIvPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0wLjUgLTAuNSkiPjxzd2l0Y2g+PGZvcmVpZ25PYmplY3QgcG9pbnRlci1ldmVudHM9Im5vbmUiIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHJlcXVpcmVkRmVhdHVyZXM9Imh0dHA6Ly93d3cudzMub3JnL1RSL1NWRzExL2ZlYXR1cmUjRXh0ZW5zaWJpbGl0eSIgc3R5bGU9Im92ZXJmbG93OiB2aXNpYmxlOyB0ZXh0LWFsaWduOiBsZWZ0OyI+PGRpdiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94aHRtbCIgc3R5bGU9ImRpc3BsYXk6IGZsZXg7IGFsaWduLWl0ZW1zOiB1bnNhZmUgY2VudGVyOyBqdXN0aWZ5LWNvbnRlbnQ6IHVuc2FmZSBjZW50ZXI7IHdpZHRoOiAzOHB4OyBoZWlnaHQ6IDFweDsgcGFkZGluZy10b3A6IDIwcHg7IG1hcmdpbi1sZWZ0OiAyODFweDsiPjxkaXYgZGF0YS1kcmF3aW8tY29sb3JzPSJjb2xvcjogcmdiKDAsIDAsIDApOyAiIHN0eWxlPSJib3gtc2l6aW5nOiBib3JkZXItYm94OyBmb250LXNpemU6IDBweDsgdGV4dC1hbGlnbjogY2VudGVyOyI+PGRpdiBzdHlsZT0iZGlzcGxheTogaW5saW5lLWJsb2NrOyBmb250LXNpemU6IDE1cHg7IGZvbnQtZmFtaWx5OiBIZWx2ZXRpY2E7IGNvbG9yOiByZ2IoMCwgMCwgMCk7IGxpbmUtaGVpZ2h0OiAxLjI7IHBvaW50ZXItZXZlbnRzOiBhbGw7IHdoaXRlLXNwYWNlOiBub3JtYWw7IG92ZXJmbG93LXdyYXA6IG5vcm1hbDsiPk0xPC9kaXY+PC9kaXY+PC9kaXY+PC9mb3JlaWduT2JqZWN0Pjx0ZXh0IHg9IjMwMCIgeT0iMjUiIGZpbGw9InJnYigwLCAwLCAwKSIgZm9udC1mYW1pbHk9IkhlbHZldGljYSIgZm9udC1zaXplPSIxNXB4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5NMTwvdGV4dD48L3N3aXRjaD48L2c+PHJlY3QgeD0iMjgwIiB5PSI5NSIgd2lkdGg9IjQwIiBoZWlnaHQ9IjMwIiBmaWxsPSIjZWVlZWVlIiBzdHJva2U9IiMzNjM5M2QiIHBvaW50ZXItZXZlbnRzPSJhbGwiLz48ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMC41IC0wLjUpIj48c3dpdGNoPjxmb3JlaWduT2JqZWN0IHBvaW50ZXItZXZlbnRzPSJub25lIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiByZXF1aXJlZEZlYXR1cmVzPSJodHRwOi8vd3d3LnczLm9yZy9UUi9TVkcxMS9mZWF0dXJlI0V4dGVuc2liaWxpdHkiIHN0eWxlPSJvdmVyZmxvdzogdmlzaWJsZTsgdGV4dC1hbGlnbjogbGVmdDsiPjxkaXYgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGh0bWwiIHN0eWxlPSJkaXNwbGF5OiBmbGV4OyBhbGlnbi1pdGVtczogdW5zYWZlIGNlbnRlcjsganVzdGlmeS1jb250ZW50OiB1bnNhZmUgY2VudGVyOyB3aWR0aDogMzhweDsgaGVpZ2h0OiAxcHg7IHBhZGRpbmctdG9wOiAxMTBweDsgbWFyZ2luLWxlZnQ6IDI4MXB4OyI+PGRpdiBkYXRhLWRyYXdpby1jb2xvcnM9ImNvbG9yOiByZ2IoMCwgMCwgMCk7ICIgc3R5bGU9ImJveC1zaXppbmc6IGJvcmRlci1ib3g7IGZvbnQtc2l6ZTogMHB4OyB0ZXh0LWFsaWduOiBjZW50ZXI7Ij48ZGl2IHN0eWxlPSJkaXNwbGF5OiBpbmxpbmUtYmxvY2s7IGZvbnQtc2l6ZTogMTVweDsgZm9udC1mYW1pbHk6IEhlbHZldGljYTsgY29sb3I6IHJnYigwLCAwLCAwKTsgbGluZS1oZWlnaHQ6IDEuMjsgcG9pbnRlci1ldmVudHM6IGFsbDsgd2hpdGUtc3BhY2U6IG5vcm1hbDsgb3ZlcmZsb3ctd3JhcDogbm9ybWFsOyI+TTI8L2Rpdj48L2Rpdj48L2Rpdj48L2ZvcmVpZ25PYmplY3Q+PHRleHQgeD0iMzAwIiB5PSIxMTUiIGZpbGw9InJnYigwLCAwLCAwKSIgZm9udC1mYW1pbHk9IkhlbHZldGljYSIgZm9udC1zaXplPSIxNXB4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5NMjwvdGV4dD48L3N3aXRjaD48L2c+PHJlY3QgeD0iMjgwIiB5PSIxODUiIHdpZHRoPSI0MCIgaGVpZ2h0PSIzMCIgZmlsbD0iI2VlZWVlZSIgc3Ryb2tlPSIjMzYzOTNkIiBwb2ludGVyLWV2ZW50cz0iYWxsIi8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTAuNSAtMC41KSI+PHN3aXRjaD48Zm9yZWlnbk9iamVjdCBwb2ludGVyLWV2ZW50cz0ibm9uZSIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgcmVxdWlyZWRGZWF0dXJlcz0iaHR0cDovL3d3dy53My5vcmcvVFIvU1ZHMTEvZmVhdHVyZSNFeHRlbnNpYmlsaXR5IiBzdHlsZT0ib3ZlcmZsb3c6IHZpc2libGU7IHRleHQtYWxpZ246IGxlZnQ7Ij48ZGl2IHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hodG1sIiBzdHlsZT0iZGlzcGxheTogZmxleDsgYWxpZ24taXRlbXM6IHVuc2FmZSBjZW50ZXI7IGp1c3RpZnktY29udGVudDogdW5zYWZlIGNlbnRlcjsgd2lkdGg6IDM4cHg7IGhlaWdodDogMXB4OyBwYWRkaW5nLXRvcDogMjAwcHg7IG1hcmdpbi1sZWZ0OiAyODFweDsiPjxkaXYgZGF0YS1kcmF3aW8tY29sb3JzPSJjb2xvcjogcmdiKDAsIDAsIDApOyAiIHN0eWxlPSJib3gtc2l6aW5nOiBib3JkZXItYm94OyBmb250LXNpemU6IDBweDsgdGV4dC1hbGlnbjogY2VudGVyOyI+PGRpdiBzdHlsZT0iZGlzcGxheTogaW5saW5lLWJsb2NrOyBmb250LXNpemU6IDE1cHg7IGZvbnQtZmFtaWx5OiBIZWx2ZXRpY2E7IGNvbG9yOiByZ2IoMCwgMCwgMCk7IGxpbmUtaGVpZ2h0OiAxLjI7IHBvaW50ZXItZXZlbnRzOiBhbGw7IHdoaXRlLXNwYWNlOiBub3JtYWw7IG92ZXJmbG93LXdyYXA6IG5vcm1hbDsiPk0zPC9kaXY+PC9kaXY+PC9kaXY+PC9mb3JlaWduT2JqZWN0Pjx0ZXh0IHg9IjMwMCIgeT0iMjA1IiBmaWxsPSJyZ2IoMCwgMCwgMCkiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EiIGZvbnQtc2l6ZT0iMTVweCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+TTM8L3RleHQ+PC9zd2l0Y2g+PC9nPjxyZWN0IHg9IjQ2MCIgeT0iMTAwIiB3aWR0aD0iMTQwIiBoZWlnaHQ9IjM1IiBmaWxsPSJyZ2IoMjU1LCAyNTUsIDI1NSkiIHN0cm9rZT0icmdiKDAsIDAsIDApIiBwb2ludGVyLWV2ZW50cz0iYWxsIi8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTAuNSAtMC41KSI+PHN3aXRjaD48Zm9yZWlnbk9iamVjdCBwb2ludGVyLWV2ZW50cz0ibm9uZSIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgcmVxdWlyZWRGZWF0dXJlcz0iaHR0cDovL3d3dy53My5vcmcvVFIvU1ZHMTEvZmVhdHVyZSNFeHRlbnNpYmlsaXR5IiBzdHlsZT0ib3ZlcmZsb3c6IHZpc2libGU7IHRleHQtYWxpZ246IGxlZnQ7Ij48ZGl2IHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hodG1sIiBzdHlsZT0iZGlzcGxheTogZmxleDsgYWxpZ24taXRlbXM6IHVuc2FmZSBjZW50ZXI7IGp1c3RpZnktY29udGVudDogdW5zYWZlIGNlbnRlcjsgd2lkdGg6IDEzOHB4OyBoZWlnaHQ6IDFweDsgcGFkZGluZy10b3A6IDExOHB4OyBtYXJnaW4tbGVmdDogNDYxcHg7Ij48ZGl2IGRhdGEtZHJhd2lvLWNvbG9ycz0iY29sb3I6IHJnYigwLCAwLCAwKTsgIiBzdHlsZT0iYm94LXNpemluZzogYm9yZGVyLWJveDsgZm9udC1zaXplOiAwcHg7IHRleHQtYWxpZ246IGNlbnRlcjsiPjxkaXYgc3R5bGU9ImRpc3BsYXk6IGlubGluZS1ibG9jazsgZm9udC1zaXplOiAxNXB4OyBmb250LWZhbWlseTogSGVsdmV0aWNhOyBjb2xvcjogcmdiKDAsIDAsIDApOyBsaW5lLWhlaWdodDogMS4yOyBwb2ludGVyLWV2ZW50czogYWxsOyB3aGl0ZS1zcGFjZTogbm9ybWFsOyBvdmVyZmxvdy13cmFwOiBub3JtYWw7Ij5GaW5hbCBQcmVkaWN0aW9uPC9kaXY+PC9kaXY+PC9kaXY+PC9mb3JlaWduT2JqZWN0Pjx0ZXh0IHg9IjUzMCIgeT0iMTIyIiBmaWxsPSJyZ2IoMCwgMCwgMCkiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EiIGZvbnQtc2l6ZT0iMTVweCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+RmluYWwgUHJlZGljdGlvbjwvdGV4dD48L3N3aXRjaD48L2c+PHBhdGggZD0iTSA1OC4wMiAxMDkgTCAxMTMuNjMgMTA5LjkiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiKDAsIDAsIDApIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHBvaW50ZXItZXZlbnRzPSJzdHJva2UiLz48cGF0aCBkPSJNIDExOC44OCAxMDkuOTggTCAxMTEuODMgMTEzLjM3IEwgMTEzLjYzIDEwOS45IEwgMTExLjk0IDEwNi4zNyBaIiBmaWxsPSJyZ2IoMCwgMCwgMCkiIHN0cm9rZT0icmdiKDAsIDAsIDApIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHBvaW50ZXItZXZlbnRzPSJhbGwiLz48cGF0aCBkPSJNIDgwIDIxMCBMIDgwIDEwIiBmaWxsPSJub25lIiBzdHJva2U9InJnYigwLCAwLCAwKSIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBwb2ludGVyLWV2ZW50cz0ic3Ryb2tlIi8+PHBhdGggZD0iTSA4MCAxMCBMIDExMy42MyAxMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2IoMCwgMCwgMCkiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgcG9pbnRlci1ldmVudHM9InN0cm9rZSIvPjxwYXRoIGQ9Ik0gMTE4Ljg4IDEwIEwgMTExLjg4IDEzLjUgTCAxMTMuNjMgMTAgTCAxMTEuODggNi41IFoiIGZpbGw9InJnYigwLCAwLCAwKSIgc3Ryb2tlPSJyZ2IoMCwgMCwgMCkiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgcG9pbnRlci1ldmVudHM9ImFsbCIvPjxwYXRoIGQ9Ik0gODAgMjEwIEwgMTEzLjYzIDIxMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2IoMCwgMCwgMCkiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgcG9pbnRlci1ldmVudHM9InN0cm9rZSIvPjxwYXRoIGQ9Ik0gMTE4Ljg4IDIxMCBMIDExMS44OCAyMTMuNSBMIDExMy42MyAyMTAgTCAxMTEuODggMjA2LjUgWiIgZmlsbD0icmdiKDAsIDAsIDApIiBzdHJva2U9InJnYigwLCAwLCAwKSIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBwb2ludGVyLWV2ZW50cz0iYWxsIi8+PHBhdGggZD0iTSAyMDAgMjAgTCAyNzMuNjMgMjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiKDAsIDAsIDApIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHBvaW50ZXItZXZlbnRzPSJzdHJva2UiLz48cGF0aCBkPSJNIDI3OC44OCAyMCBMIDI3MS44OCAyMy41IEwgMjczLjYzIDIwIEwgMjcxLjg4IDE2LjUgWiIgZmlsbD0icmdiKDAsIDAsIDApIiBzdHJva2U9InJnYigwLCAwLCAwKSIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBwb2ludGVyLWV2ZW50cz0iYWxsIi8+PHBhdGggZD0iTSAyMDAgMTEwIEwgMjczLjYzIDExMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2IoMCwgMCwgMCkiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgcG9pbnRlci1ldmVudHM9InN0cm9rZSIvPjxwYXRoIGQ9Ik0gMjc4Ljg4IDExMCBMIDI3MS44OCAxMTMuNSBMIDI3My42MyAxMTAgTCAyNzEuODggMTA2LjUgWiIgZmlsbD0icmdiKDAsIDAsIDApIiBzdHJva2U9InJnYigwLCAwLCAwKSIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBwb2ludGVyLWV2ZW50cz0iYWxsIi8+PHBhdGggZD0iTSAyMDAgMjAwIEwgMjczLjYzIDIwMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2IoMCwgMCwgMCkiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgcG9pbnRlci1ldmVudHM9InN0cm9rZSIvPjxwYXRoIGQ9Ik0gMjc4Ljg4IDIwMCBMIDI3MS44OCAyMDMuNSBMIDI3My42MyAyMDAgTCAyNzEuODggMTk2LjUgWiIgZmlsbD0icmdiKDAsIDAsIDApIiBzdHJva2U9InJnYigwLCAwLCAwKSIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBwb2ludGVyLWV2ZW50cz0iYWxsIi8+PHBhdGggZD0iTSAzMjAgMjcuNSBMIDQ1NC4zNSA5Ny4wNyIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2IoMCwgMCwgMCkiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgcG9pbnRlci1ldmVudHM9InN0cm9rZSIvPjxwYXRoIGQ9Ik0gNDU5LjAxIDk5LjQ5IEwgNDUxLjE4IDk5LjM3IEwgNDU0LjM1IDk3LjA3IEwgNDU0LjQgOTMuMTYgWiIgZmlsbD0icmdiKDAsIDAsIDApIiBzdHJva2U9InJnYigwLCAwLCAwKSIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBwb2ludGVyLWV2ZW50cz0iYWxsIi8+PHBhdGggZD0iTSAzMjAgMTEwIEwgNDUzLjYzIDEwOC44MSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2IoMCwgMCwgMCkiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgcG9pbnRlci1ldmVudHM9InN0cm9rZSIvPjxwYXRoIGQ9Ik0gNDU4Ljg4IDEwOC43NiBMIDQ1MS45MSAxMTIuMzIgTCA0NTMuNjMgMTA4LjgxIEwgNDUxLjg1IDEwNS4zMiBaIiBmaWxsPSJyZ2IoMCwgMCwgMCkiIHN0cm9rZT0icmdiKDAsIDAsIDApIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHBvaW50ZXItZXZlbnRzPSJhbGwiLz48cGF0aCBkPSJNIDMyMCAxOTIuNSBMIDQ1NC4zOSAxMjAuNTEiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiKDAsIDAsIDApIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHBvaW50ZXItZXZlbnRzPSJzdHJva2UiLz48cGF0aCBkPSJNIDQ1OS4wMSAxMTguMDMgTCA0NTQuNSAxMjQuNDIgTCA0NTQuMzkgMTIwLjUxIEwgNDUxLjE5IDExOC4yNSBaIiBmaWxsPSJyZ2IoMCwgMCwgMCkiIHN0cm9rZT0icmdiKDAsIDAsIDApIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHBvaW50ZXItZXZlbnRzPSJhbGwiLz48L2c+PHN3aXRjaD48ZyByZXF1aXJlZEZlYXR1cmVzPSJodHRwOi8vd3d3LnczLm9yZy9UUi9TVkcxMS9mZWF0dXJlI0V4dGVuc2liaWxpdHkiLz48YSB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLC01KSIgeGxpbms6aHJlZj0iaHR0cHM6Ly93d3cuZHJhd2lvLmNvbS9kb2MvZmFxL3N2Zy1leHBvcnQtdGV4dC1wcm9ibGVtcyIgdGFyZ2V0PSJfYmxhbmsiPjx0ZXh0IHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtc2l6ZT0iMTBweCIgeD0iNTAlIiB5PSIxMDAlIj5UZXh0IGlzIG5vdCBTVkcgLSBjYW5ub3QgZGlzcGxheTwvdGV4dD48L2E+PC9zd2l0Y2g+PC9zdmc+" width="auto" />
+</center>
+<h3 id="feature_fraction">3. <code>feature_fraction</code></h3>
+<p>Indica el porcentaje de columnas (features) seleccionadas
+aleatoriamente para construir cada árbol. Esto introduce variabilidad y
+reduce la correlación entre árboles. Es de mucha utilidad cuando hay
+muchas columnas.</p>
+<h3 id="min_gain_to_split">4. <code>min_gain_to_split</code></h3>
+<p>Impide que se creen ramas nuevas si la ganancia no supera cierto
+umbral, actuando como un filtro para evitar divisiones poco
+informativas. Esto ayuda a simplificar los árboles.</p>
+<h3 id="lambda_l1">5. <code>lambda_l1</code></h3>
+<p>La regularización L1 (Lasso) castiga la suma de los valores absolutos
+de las hojas del árbol. Esto fuerza la simplicidad empujado pesos de
+variables poco importantes hacia cero. Suele ser útil cuando hay muchas
+variables poco útiles.</p>
+<h3 id="lambda_l2">6. <code>lambda_l2</code></h3>
+<p>La regularización L2 (Ridge) penaliza la suma de los cuadrados de los
+valores en las hojas. Esto evita que las predicciones sean demasiado
+extremas, ayudandon así a la estabilidad del modelo.</p>
+</div>
+<div id="datos-para-el-ejemplo" class="slide section level1">
+<h1>Datos para el ejemplo</h1>
 </div>
 <div id="instalación" class="slide section level1">
 <h1>Instalación</h1>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="co"># Instalar solo si no están instalados</span></span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="co"># install.packages(&quot;lightgbm&quot;, repos = &quot;https://cran.r-project.org&quot;)</span></span>
-<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="co"># install.packages(&quot;Matrix&quot;)</span></span>
-<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="co"># install.packages(&quot;data.table&quot;)</span></span>
-<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a></span>
-<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="fu">library</span>(lightgbm)</span>
-<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="fu">library</span>(Matrix)</span>
-<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="fu">library</span>(data.table)</span></code></pre></div>
+<p>LightGBM está disponible en CRAN y puede instalarse con el siguiente
+código R.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;lightgbm&quot;</span>, <span class="at">repos =</span> <span class="st">&quot;https://cran.r-project.org&quot;</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(lightgbm)</span></code></pre></div>
+<p>Cada versión del paquete que ha estado en CRAN también está
+disponible en los <a href="https://github.com/microsoft/LightGBM/releases">LightGBM
+releases</a>, con un formato de nombre
+lightgbm-{VERSION}-r-cran.tar.gz</p>
 </div>
 
   <!-- dynamically load mathjax for compatibility with self-contained -->
