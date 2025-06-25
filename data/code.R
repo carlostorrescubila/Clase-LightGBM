@@ -8,9 +8,9 @@ library(ggplot2)
 
 # 1. Lectura de datos
 train_values <- read_csv("data/train_values.csv")
-train_labels <- read_csv("data_old/train_labels.csv")
-test_values <- read_csv("data_old/test_values.csv")
-test_labels <- read_csv("data_old/test_labels.csv")
+train_labels <- read_csv("data/train_labels.csv")
+test_values <- read_csv("data/test_values.csv")
+test_labels <- read_csv("data/test_labels.csv")
 
 # 2. Preprocessing
 # Convertir a matriz

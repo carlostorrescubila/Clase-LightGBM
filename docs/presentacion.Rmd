@@ -15,6 +15,7 @@ output:
 ```{r setup, include=FALSE}
 library(htmltools)
 library(DiagrammeR)
+library(DT)
 knitr::opts_chunk$set(
   echo = TRUE, 
   message = FALSE, 
@@ -999,9 +1000,9 @@ En los datos proporcionados hay 14 columnas, donde la columna `patient_id` es un
 
 - slope_of_peak_exercise_st_segment: pendiente del segmento ST en el electrocardiograma durante el pico del ejercicio físico. Esta medida indica la calidad del flujo sanguíneo al corazón, ya que una pendiente plana o descendente puede ser un indicador de enfermedad cardíaca.
 
-  - `heart_disease_present = 1`: Pendiente ascendente (**Up-sloping**)
-  - `heart_disease_present = 2`: Pendiente plana (**Flat**) 
-  - `heart_disease_present = 3`: Pendiente descendente (**Down-sloping**)
+  - `slope_of_peak_exercise_st_segment = 1`: Pendiente ascendente (*Up-sloping*)
+  - `slope_of_peak_exercise_st_segment = 2`: Pendiente plana (*Flat*) 
+  - `slope_of_peak_exercise_st_segment = 3`: Pendiente descendente (*Down-sloping*)
 
 - thal: resultados de una prueba de esfuerzo con talio que mide el flujo sanguíneo al corazón, con valores posibles normal, defecto fijo y defecto reversible.
 
@@ -1017,19 +1018,32 @@ En los datos proporcionados hay 14 columnas, donde la columna `patient_id` es un
 
 - fasting_blood_sugar_gt_120_mg_per_dl: azúcar en sangre en ayunas > 120 mg/dl.
 
-- resting_ekg_results: resultados electrocardiográficos en reposo (valores 0,1,2).
+  - `fasting_blood_sugar_gt_120_mg_per_dl = 0`: la glucosa en ayunas es menor o igual a 120 mg/dL
+  - `fasting_blood_sugar_gt_120_mg_per_dl = 1`: la glucosa en ayunas es mayor a 120 mg/dL
+
+- resting_ekg_results: resultados electrocardiográficos en reposo.
+
+  - `resting_ekg_results = 0`: Normal
+  - `resting_ekg_results = 1`: Anormalidad de la onda ST-T (problemas de oxigenación del corazón)
+  - `resting_ekg_results = 2`: Hipertrofia ventricular izquierda probable
 
 - serum_cholesterol_mg_per_dl: colesterol sérico en mg/dl.
 
-- oldpeak_eq_st_depression: oldpeak = depresión del ST inducida por el ejercicio en relación con el reposo, una medida de anormalidad en los electrocardiogramas. 
+- oldpeak_eq_st_depression: depresión del ST inducida por el ejercicio en relación con el reposo. Esta es una medida de anormalidad en los electrocardiogramas. 
 
-- sex: 0: mujer, 1: hombre
+- sex: genero.
+
+  - `sex = 0`: mujer
+  - `sex = 1`: hombre
 
 - edad: edad en años
 
 - max_heart_rate_achieved: frecuencia cardiaca máxima alcanzada (pulsaciones por minuto)
 
-- exercise_induced_angina: dolor torácico inducido por el ejercicio (`0: Falso, 1: Verdadero`)
+- exercise_induced_angina: presencia de una angina de pecho (dolor o molestia en el pecho) inducida por el ejercicio durante una prueba de esfuerzo cardíaca.
+  
+  - `exercise_induced_angina = 0`: Falso
+  - `exercise_induced_angina = 1`: Verdadero
 
 # Instalación
 
@@ -1089,33 +1103,43 @@ test_labels <- read_csv("data/test_labels.csv")
 
 ## Datos de entrenamiento
 
-```{r train_values, echo=FALSE}
-library(DT)
-datatable(
+```{r train_values_html, echo=FALSE}
+train_values_html <- datatable(
   train_values,
   options = list(
     scrollX = TRUE,         # Permite scroll horizontal si hay muchas columnas
     autoWidth = FALSE       # Evita que el ancho se fije automático y permite expandirse
   ),
-  width = '100%',           # Hace que el widget ocupe el 100% del contenedor
+  width = '80%',           # Hace que el widget ocupe el 100% del contenedor
+)
+
+htmltools::div(
+  style = "display: flex; justify-content: center; width: 100%;",
+  train_values_html
 )
 ```
 
 ## Variable objetivo para entrenamiento
 
-```{r train_labels, echo=FALSE}
-datatable(
+```{r train_labels_html, echo=FALSE}
+train_labels_html <- datatable(
   train_labels,
   options = list(
     scrollX = TRUE,         # Permite scroll horizontal si hay muchas columnas
     autoWidth = FALSE       # Evita que el ancho se fije automático y permite expandirse
   ),
-  width = '80%',           # Hace que el widget ocupe el 100% del contenedor
+  width = '50%',           # Hace que el widget ocupe el 100% del contenedor
 ) |>
   tagList(
     tags$div(style = "display: flex; justify-content: center;")
   )
+
+htmltools::div(
+  style = "display: flex; justify-content: center; width: 100%;",
+  train_labels_html
+)
 ```
+
 
 
 # Ejemplo: Análisis exploratorio de datos (EDA)
@@ -1126,7 +1150,7 @@ Antes de procesar los datos es recomendable realizar una exploración sencilla d
 
 Es de suma importancia conocer si contamos con información desbalanceada para tomar decisiones sobre el muestreo necesario para el entrenamiento.
 
-```{r}
+```{r target}
 train_labels |>
   mutate(heart_disease_present = as.factor(heart_disease_present)) |>
   count(heart_disease_present) |>
@@ -1135,12 +1159,28 @@ train_labels |>
   labs(title = "Conteo variable respuesta para el set de Train") +
   theme_minimal() + 
   theme(plot.title = element_text(hjust = 0.5)) +
-  scale_fill_manual(values = c("chartreuse4", "tomato1"))
+  scale_fill_manual(values = c("#00BA38", "#F8766D"))
 ```
 
 ## Variables categróricas
 
 Es importante conocer las variables categóricas que se tienen y considerar su distribución. Para variables con 3 o más categorías se recomienda utilizar técnicas de **One Hot Encoding** que ayuden a facilitar el aprendizaje al modelo.
+
+### slope_of_peak_exercise_st_segment
+
+```{r feature_slope_of_peak_exercise_st_segment}
+train_values |>
+  mutate(slope_of_peak_exercise_st_segment = as.factor(slope_of_peak_exercise_st_segment)) |>
+  count(slope_of_peak_exercise_st_segment) |>
+  ggplot(aes(x = slope_of_peak_exercise_st_segment, y = n, fill = slope_of_peak_exercise_st_segment)) +
+  geom_col() +
+  labs(title = "Conteo por slope_of_peak_exercise_st_segment") +
+  theme_minimal() + 
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_fill_manual(values = c("#00BA38", "#619CFF", "#F8766D"))
+```
+
+### thal
 
 ```{r feature_thal}
 train_values |>
@@ -1152,17 +1192,49 @@ train_values |>
   theme_minimal() + 
   theme(plot.title = element_text(hjust = 0.5))
 ```
-```{r}
+
+### chest_pain_type
+
+```{r feature_chest_pain_type}
 train_values |>
   mutate(chest_pain_type = as.factor(chest_pain_type)) |>
   count(chest_pain_type) |>
   ggplot(aes(x = chest_pain_type, y = n, fill = chest_pain_type)) +
   geom_col() +
-  labs(title = "Conteo por chest_pain_type") +
+  labs(title = "Conteo por chest pain") +
   theme_minimal() + 
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
+### fasting_blood_sugar_gt_120_mg_per_dl
+
+```{r feature_fasting_blood_sugar_gt_120_mg_per_dl}
+train_values |>
+  mutate(fasting_blood_sugar_gt_120_mg_per_dl = as.factor(fasting_blood_sugar_gt_120_mg_per_dl)) |>
+  count(fasting_blood_sugar_gt_120_mg_per_dl) |>
+  ggplot(aes(x = fasting_blood_sugar_gt_120_mg_per_dl, y = n, fill = fasting_blood_sugar_gt_120_mg_per_dl)) +
+  geom_col() +
+  labs(title = "Conteo por fasting_blood_sugar_gt_120_mg_per_dlo") +
+  theme_minimal() + 
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_fill_manual(values = c("#619CFF", "#F8766D"))
+```
+
+### resting_ekg_results
+
+```{r feature_resting_ekg_results}
+train_values |>
+  mutate(resting_ekg_results = as.factor(resting_ekg_results)) |>
+  count(resting_ekg_results) |>
+  ggplot(aes(x = resting_ekg_results, y = n, fill = resting_ekg_results)) +
+  geom_col() +
+  labs(title = "Conteo por chest pain") +
+  theme_minimal() + 
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_fill_manual(values = c("#00BA38", "#619CFF", "#F8766D"))
+```
+
+### sex
 
 ```{r feature_sex}
 train_values |>
@@ -1173,17 +1245,88 @@ train_values |>
   labs(title = "Conteo por Sexo") +
   theme_minimal() + 
   theme(plot.title = element_text(hjust = 0.5)) +
-  scale_fill_manual(values = c("steelblue", "salmon"))
+  scale_fill_manual(values = c("#F8766D", "#619CFF"))
+```
+
+### exercise_induced_angina
+
+```{r feature_exercise_induced_angina}
+train_values |>
+  mutate(exercise_induced_angina = as.factor(exercise_induced_angina)) |>
+  count(exercise_induced_angina) |>
+  ggplot(aes(x = exercise_induced_angina, y = n, fill = exercise_induced_angina)) +
+  geom_col() +
+  labs(title = "Conteo por exercise_induced_anginao") +
+  theme_minimal() + 
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_fill_manual(values = c("#619CFF", "#F8766D"))
 ```
 
 ## Variables continuas
 
+### Estadísticas descriptivas
+
+```{r descriptivos, eval=FALSE}
+descr(
+  train_values |> dplyr::select(
+    resting_blood_pressure, 
+    num_major_vessels, 
+    serum_cholesterol_mg_per_dl, 
+    oldpeak_eq_st_depression, 
+    age, 
+    max_heart_rate_achieved
+  ),
+  stats = "common",
+  transpose = TRUE,
+  round.digits = 2
+) |> as.data.frame()
+```
+
+```{r descriptivos_html, echo=FALSE}
+descriptivos_html <- descr(
+  train_values |> dplyr::select(
+    resting_blood_pressure, 
+    num_major_vessels, 
+    serum_cholesterol_mg_per_dl, 
+    oldpeak_eq_st_depression, 
+    age, 
+    max_heart_rate_achieved
+  ),
+  stats = "common",
+  transpose = TRUE,
+  round.digits = 2
+) |> as.data.frame() |>
+  datatable(
+    options = list(
+      scrollX = TRUE,         # Permite scroll horizontal si hay muchas columnas
+      autoWidth = FALSE       # Evita que el ancho se fije automático y permite expandirse
+    ),
+    width = '80%',           # Hace que el widget ocupe el 100% del contenedor
+  )
+
+htmltools::div(
+  style = "display: flex; justify-content: center; width: 100%;",
+  descriptivos_html
+)
+```
+
+### Estadísticas descriptivas por presencia y ausencia de enfermedad cardiaca
+
 ```{r}
 stby(
-  data = train_values,
-  INDICES = train_labels$heart_disease_present, # by Species
-  FUN = descr, # descriptive statistics
-  stats = "common" # most common descr. stats
+  data = train_values |> dplyr::select(
+    resting_blood_pressure, 
+    num_major_vessels, 
+    serum_cholesterol_mg_per_dl, 
+    oldpeak_eq_st_depression, 
+    age, 
+    max_heart_rate_achieved
+  ),
+  INDICES = train_labels$heart_disease_present,
+  FUN = descr,
+  stats = "common",
+  transpose = TRUE,
+  style="rmarkdown" 
 )
 ```
 
