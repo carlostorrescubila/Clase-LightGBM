@@ -1,5 +1,5 @@
 ---
-title: "Introducción a LightGBM con R"
+title: "Introducción a LightGBM con R" 
 author: "Carlos A. Torres Cubilla"
 output:
   slidy_presentation: 
@@ -982,6 +982,55 @@ La regularización L2 (Ridge) penaliza la suma de los cuadrados de los valores e
 
 # Datos para el ejemplo
 
+## Fuente
+
+Los datos provienen del conjunto público *Cleveland Heart Disease Database*, disponible en el repositorio de UCI y utilizado en la competencia *"Machine Learning with a Heart"* de [DrivenData](https://www.drivendata.org/competitions/54/machine-learning-with-a-heart) 
+
+## Objetivo 
+
+El objetivo del proyecto es predecir la presencia o ausencia de enfermedad cardíaca (`heart_disease_present`) a partir de información clínica básica de cada paciente.
+
+- `heart_disease_present = 0`: no hay cardiopatía presente
+- `heart_disease_present = 1`: presencia de una enfermedad cardíaca
+
+## Variables
+
+En los datos proporcionados hay 14 columnas, donde la columna `patient_id` es un identificador único y aleatorio y las 13 variables restantes se representan la suguiente información:
+
+- slope_of_peak_exercise_st_segment: pendiente del segmento ST en el electrocardiograma durante el pico del ejercicio físico. Esta medida indica la calidad del flujo sanguíneo al corazón, ya que una pendiente plana o descendente puede ser un indicador de enfermedad cardíaca.
+
+  - `heart_disease_present = 1`: Pendiente ascendente (**Up-sloping**)
+  - `heart_disease_present = 2`: Pendiente plana (**Flat**) 
+  - `heart_disease_present = 3`: Pendiente descendente (**Down-sloping**)
+
+- thal: resultados de una prueba de esfuerzo con talio que mide el flujo sanguíneo al corazón, con valores posibles normal, defecto fijo y defecto reversible.
+
+  - `Normal	`: Flujo sanguíneo normal. No se detectan problemas de perfusión
+  - `Fixed Defect`: Puede indicar una zona del corazón que ya no recibe sangre debido a daño permanente.
+  - `Reversible Defect`: Indica isquemia, donde el flujo sanguíneo se ve comprometido solo durante el esfuerzo.
+
+- resting_blood_pressure: presión sanguínea en reposo. 
+
+- chest_pain_type: tipo de dolor torácico (4 valores). 
+
+- num_major_vessels: número de vasos mayores (0-3) coloreados por fluroscopia.
+
+- fasting_blood_sugar_gt_120_mg_per_dl: azúcar en sangre en ayunas > 120 mg/dl.
+
+- resting_ekg_results: resultados electrocardiográficos en reposo (valores 0,1,2).
+
+- serum_cholesterol_mg_per_dl: colesterol sérico en mg/dl.
+
+- oldpeak_eq_st_depression: oldpeak = depresión del ST inducida por el ejercicio en relación con el reposo, una medida de anormalidad en los electrocardiogramas. 
+
+- sex: 0: mujer, 1: hombre
+
+- edad: edad en años
+
+- max_heart_rate_achieved: frecuencia cardiaca máxima alcanzada (pulsaciones por minuto)
+
+- exercise_induced_angina: dolor torácico inducido por el ejercicio (`0: Falso, 1: Verdadero`)
+
 # Instalación
 
 ## CRAN
@@ -1012,6 +1061,7 @@ devtools::install_github("microsoft/LightGBM", subdir = "R-package")
 ```{r librerias}
 library(readr)
 library(dplyr)
+library(summarytools)
 library(fastDummies)
 library(lightgbm)
 library(pROC)
@@ -1072,7 +1122,25 @@ datatable(
 
 Antes de procesar los datos es recomendable realizar una exploración sencilla de la información que ayude a comprender mejor la infomración con la que se está tranbajando. 
 
+## Variable objetivo
+
+Es de suma importancia conocer si contamos con información desbalanceada para tomar decisiones sobre el muestreo necesario para el entrenamiento.
+
+```{r}
+train_labels |>
+  mutate(heart_disease_present = as.factor(heart_disease_present)) |>
+  count(heart_disease_present) |>
+  ggplot(aes(x = heart_disease_present, y = n, fill = heart_disease_present)) +
+  geom_col() +
+  labs(title = "Conteo variable respuesta para el set de Train") +
+  theme_minimal() + 
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_fill_manual(values = c("chartreuse4", "tomato1"))
+```
+
 ## Variables categróricas
+
+Es importante conocer las variables categóricas que se tienen y considerar su distribución. Para variables con 3 o más categorías se recomienda utilizar técnicas de **One Hot Encoding** que ayuden a facilitar el aprendizaje al modelo.
 
 ```{r feature_thal}
 train_values |>
@@ -1081,8 +1149,20 @@ train_values |>
   ggplot(aes(x = thal, y = n, fill = thal)) +
   geom_col() +
   labs(title = "Conteo por thal") +
-  theme_minimal()
+  theme_minimal() + 
+  theme(plot.title = element_text(hjust = 0.5))
 ```
+```{r}
+train_values |>
+  mutate(chest_pain_type = as.factor(chest_pain_type)) |>
+  count(chest_pain_type) |>
+  ggplot(aes(x = chest_pain_type, y = n, fill = chest_pain_type)) +
+  geom_col() +
+  labs(title = "Conteo por chest_pain_type") +
+  theme_minimal() + 
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
 
 ```{r feature_sex}
 train_values |>
@@ -1091,28 +1171,20 @@ train_values |>
   ggplot(aes(x = sex, y = n, fill = sex)) +
   geom_col() +
   labs(title = "Conteo por Sexo") +
-  theme_minimal() +
+  theme_minimal() + 
+  theme(plot.title = element_text(hjust = 0.5)) +
   scale_fill_manual(values = c("steelblue", "salmon"))
 ```
 
 ## Variables continuas
 
 ```{r}
-train_values |>
-  select(-patient_id, -thal, -sex) |>
-  summarise(
-    across(
-      everything(),
-      list(
-        Media = ~mean(. , na.rm = TRUE),
-        Mediana = ~median(. , na.rm = TRUE),
-        SD = ~sd(. , na.rm = TRUE),
-        Min = ~min(. , na.rm = TRUE),
-        Max = ~max(. , na.rm = TRUE),
-        NA_Count = ~sum(is.na(.))
-        )
-      )
-    )
+stby(
+  data = train_values,
+  INDICES = train_labels$heart_disease_present, # by Species
+  FUN = descr, # descriptive statistics
+  stats = "common" # most common descr. stats
+)
 ```
 
 # Ejemplo: preprocesamiento de datos
@@ -1439,3 +1511,33 @@ LightGBM también permite realizar un gráfico del feature importance.
 lgb.importance(model) |> 
   lgb.plot.importance(top_n = 20)
 ```
+
+# Ejemplo: consideraciones finales
+
+## Guardar el modelo entrenado
+
+Una vez entrenado el modelo, es recomendable guardarlo para no tener que repetir el proceso de entrenamiento. Esto es útil cuando queremos reutilizar el modelo en futuras predicciones.
+
+```{r lbg_save}
+lgb.save(model, "modelo_lgbm.txt")
+```
+
+## Cargar el modelo previamente guardado
+
+Una vez guardado un modelo, podemos volver a cargarlo de manera similar a como se cargan los dataframes. Esto es especialmente útil para usar el modelo en otros scripts, sesiones, o después de reiniciar R.
+
+```{r lgb_load}
+modelo_cargado <- lgb.load("modelo_lgbm.txt")
+```
+
+## Verificar veracidad del modelo
+
+Es posible comprobar que el modelo cargado produce los mismos resultados que el original.
+
+```{r all_equal}
+all.equal(
+  predict(model, X_test),
+  predict(modelo_cargado, X_test)
+)
+```
+
