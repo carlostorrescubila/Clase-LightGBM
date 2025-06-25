@@ -119,11 +119,7 @@ ggplot(roc_df, aes(x = fpr, y = tpr, color = dataset)) +
   )+
   theme_minimal()
 
-
-roc_curve <- roc(y_test, pred_probs)
-auc(roc_curve)  # Área bajo la curva
-plot(roc_curve)
-
+# 8. FI
 lgb.importance(model)
 lgb.importance(model) |> 
   lgb.plot.importance(top_n = 20)

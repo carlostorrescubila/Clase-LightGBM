@@ -1,0 +1,59 @@
+<style>
+pre {
+  position: relative;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 1.5em 1em 1em 1em;
+  font-size: 14px;
+  font-family: "JetBrains Mono", monospace;
+  overflow-x: auto;
+}
+.copy-btn {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: sans-serif;
+  padding: 2px 6px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s ease, background 0.2s ease;
+  z-index: 10;
+}
+.copy-btn:hover {
+  opacity: 1;
+  background: #e5e7eb;
+}
+pre:hover .copy-btn {
+  display: inline;
+}
+pre .copy-btn {
+  display: none;
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  document.querySelectorAll("pre").forEach(pre => {
+    const btn = document.createElement("button");
+    btn.innerText = "Copiar";
+    btn.className = "copy-btn";
+    btn.onclick = () => {
+      const code = Array.from(pre.childNodes)
+        .filter(node => node.nodeName !== "BUTTON")
+        .map(node => node.innerText || node.textContent)
+        .join("");
+      navigator.clipboard.writeText(code).then(() => {
+        btn.innerText = "✅ Copiado";
+        setTimeout(() => btn.innerText = "Copiar", 1500);
+      });
+    };
+    pre.appendChild(btn);
+  });
+});
+</script>

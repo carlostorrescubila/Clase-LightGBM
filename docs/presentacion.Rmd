@@ -8,6 +8,8 @@ output:
     toc_float:
       collapsed: false
       smooth_scroll: false
+    includes:
+      in_header: styles_and_copy_button.html
 ---
 
 ```{r setup, include=FALSE}
@@ -140,7 +142,7 @@ El modelo comienza con una predicción constante para todos los datos.
 
 Para cada observación, se calcula cuánto se está equivocando el modelo actual:
 
-\( g_i^{1} = y_i - F_{0}(x_i) \)
+$$ g_i^{1} = y_i - F_{0}(x_i) $$
 
 Este paso corresponde al cálculo del gradiente de la función de pérdida con respecto a la predicción actual.
 
@@ -151,7 +153,7 @@ Se entrena un modelo débil que aprenda a corregir esos errores: \( h_1(x) \appr
 ### Paso 4: Escalar la corrección con un Learning Rate
 Se ajusta la magnitud de la corrección aplicando un factor de aprendizaje \( \eta \) (por ejemplo, 0.1):
 
-\( \text{corrección} = \eta \cdot h_1(x) \)
+$$ \text{corrección} = \eta \cdot h_1(x) $$
 
 Esto suaviza el aprendizaje y previene el sobreajuste.
 
@@ -159,7 +161,7 @@ Esto suaviza el aprendizaje y previene el sobreajuste.
 
 Se suma la corrección al modelo acumulado anterior:
 
-\( F_m(x) = F_0(x) + \eta \cdot h_1(x) \)
+$$ F_m(x) = F_0(x) + \eta \cdot h_1(x) $$
 
 Este proceso se repite durante varias iteraciones, agregando un nuevo modelo débil \( h(x) \) cada vez, hasta alcanzar un número máximo de rondas (*nrounds*) o un criterio de parada temprana (*early_stopping_rounds*)
 
@@ -167,7 +169,7 @@ Este proceso se repite durante varias iteraciones, agregando un nuevo modelo dé
 
 La predicción final del modelo se puede representar mediante la siguiente función:
 
-\( F_m(x) = F_0(x) + \sum_{m=1}^M \eta \cdot h_m(x)\)
+$$ F_m(x) = F_0(x) + \sum_{m=1}^M \eta \cdot h_m(x) $$
 
 Donde: 
 
@@ -211,7 +213,7 @@ predictions <- lapply(1:12, function(i) {
     y_pred = predict(model, X_mat, num_iteration = i),
     paso = paste("Paso", i)
   )
-}) %>% bind_rows()
+}) |> bind_rows()
 
 # Convertir a factor con niveles ordenados
 predictions$paso <- factor(predictions$paso, levels = paste("Paso", 1:12))
@@ -982,11 +984,15 @@ La regularización L2 (Ridge) penaliza la suma de los cuadrados de los valores e
 
 # Instalación
 
+## CRAN
+
 LightGBM está disponible en CRAN y puede instalarse con el siguiente código R.
 
 ```{r instalacion, eval=FALSE}
 install.packages("lightgbm", repos = "https://cran.r-project.org")
 ```
+
+## GitHub
 
 Cada versión del paquete que ha estado en CRAN también está disponible en los [LightGBM releases](https://github.com/microsoft/LightGBM/releases), con un formato de nombre lightgbm-{VERSION}-r-cran.tar.gz
 
@@ -995,6 +1001,13 @@ devtools::install_github("microsoft/LightGBM", subdir = "R-package")
 ```
 
 # Ejemplo: librerías
+
+![readr](https://img.shields.io/badge/readr-%2300ADD8.svg?style=flat&logo=r&logoColor=white)
+![dplyr](https://img.shields.io/badge/dplyr-%230073AF.svg?style=flat&logo=r&logoColor=white)
+![fastDummies](https://img.shields.io/badge/fastDummies-%230073AF.svg?style=flat&logo=r&logoColor=white)
+![lightgbm](https://img.shields.io/badge/lightgbm-%230073AF.svg?style=flat&logo=r&logoColor=white)
+![pROC](https://img.shields.io/badge/pROC-%230073AF.svg?style=flat&logo=r&logoColor=white)
+![ggplot2](https://img.shields.io/badge/ggplot2-%230073AF.svg?style=flat&logo=r&logoColor=white)
 
 ```{r librerias}
 library(readr)
@@ -1005,8 +1018,7 @@ library(pROC)
 library(ggplot2)
 ```
 
-
-# Ejemplo: lecturea de datos
+# Ejemplo: lectura de datos
 
 ```{r wd, include=FALSE, eval=TRUE}
 setwd("..")
@@ -1025,7 +1037,87 @@ test_values <- read_csv("data/test_values.csv")
 test_labels <- read_csv("data/test_labels.csv")
 ```
 
-# Ejemplo: preprocessing
+## Datos de entrenamiento
+
+```{r train_values, echo=FALSE}
+library(DT)
+datatable(
+  train_values,
+  options = list(
+    scrollX = TRUE,         # Permite scroll horizontal si hay muchas columnas
+    autoWidth = FALSE       # Evita que el ancho se fije automático y permite expandirse
+  ),
+  width = '100%',           # Hace que el widget ocupe el 100% del contenedor
+)
+```
+
+## Variable objetivo para entrenamiento
+
+```{r train_labels, echo=FALSE}
+datatable(
+  train_labels,
+  options = list(
+    scrollX = TRUE,         # Permite scroll horizontal si hay muchas columnas
+    autoWidth = FALSE       # Evita que el ancho se fije automático y permite expandirse
+  ),
+  width = '80%',           # Hace que el widget ocupe el 100% del contenedor
+) |>
+  tagList(
+    tags$div(style = "display: flex; justify-content: center;")
+  )
+```
+
+
+# Ejemplo: Análisis exploratorio de datos (EDA)
+
+Antes de procesar los datos es recomendable realizar una exploración sencilla de la información que ayude a comprender mejor la infomración con la que se está tranbajando. 
+
+## Variables categróricas
+
+```{r feature_thal}
+train_values |>
+  mutate(thal = as.factor(thal)) |>
+  count(thal) |>
+  ggplot(aes(x = thal, y = n, fill = thal)) +
+  geom_col() +
+  labs(title = "Conteo por thal") +
+  theme_minimal()
+```
+
+```{r feature_sex}
+train_values |>
+  mutate(sex = as.factor(sex)) |>
+  count(sex) |>
+  ggplot(aes(x = sex, y = n, fill = sex)) +
+  geom_col() +
+  labs(title = "Conteo por Sexo") +
+  theme_minimal() +
+  scale_fill_manual(values = c("steelblue", "salmon"))
+```
+
+## Variables continuas
+
+```{r}
+train_values |>
+  select(-patient_id, -thal, -sex) |>
+  summarise(
+    across(
+      everything(),
+      list(
+        Media = ~mean(. , na.rm = TRUE),
+        Mediana = ~median(. , na.rm = TRUE),
+        SD = ~sd(. , na.rm = TRUE),
+        Min = ~min(. , na.rm = TRUE),
+        Max = ~max(. , na.rm = TRUE),
+        NA_Count = ~sum(is.na(.))
+        )
+      )
+    )
+```
+
+# Ejemplo: preprocesamiento de datos
+
+El preprocesamiento de datos es el paso previo al entrenamiento, donde preparamos los datos para que el modelo pueda aprender de manera efectiva. Se debe limpiar, transformar y codificar los datos para que el modelo aprenda bien.
 
 ## Preparación de las features de entrenamiento
 
@@ -1043,22 +1135,307 @@ X_train <- train_values |>
 ## Preparación de la variable objetivo o target
 
 ```{r y_train}
-y_train <- train_labels |> select(heart_disease_present) |> as.matrix()
+y_train <- train_labels |> 
+  select(heart_disease_present) |> 
+  as.matrix()
 ```
 
 ## Se repite el proceso para el conjunto de validación
 
 ```{r test}
-X_test <- as.matrix(
-  test_values |> 
+X_test <- test_values |> 
   select(-patient_id) |> 
   mutate(thal = as.factor(thal)) |> 
-  dummy_cols(select_columns = "thal", remove_selected_columns = TRUE)
-)
+  dummy_cols(
+    select_columns = "thal", 
+    remove_selected_columns = TRUE
+  ) |>
+  as.matrix()
 
 y_test <- test_labels |> 
   select(heart_disease_present) |> 
   as.matrix()
 ```
 
-# Ejemplo: Análisis exploratorio de datos (EDA)
+## Creación de los datasets de LightGBM
+
+```{r lgb_dataset}
+dtrain <- lgb.Dataset(data = X_train, label = y_train)
+dtest  <- lgb.Dataset(data = X_test, label = y_test)
+```
+
+# Ejemplo: entrenamiento
+
+```{r train}
+params <- list(
+  objective = "binary",
+  metric = "auc",
+  boosting = "gbdt",
+  verbosity = 3,
+  num_leaves = 31,
+  learning_rate = 0.05,
+  bagging_fraction = 0.9,
+  feature_fraction = 0.9,
+  bagging_freq = 1,
+  seed = 123456,
+  bagging_seed = 123456,
+  feature_fraction_seed = 123456
+)
+
+model <- lgb.train(
+  params = params,
+  nrounds = 100,
+  data = dtrain,
+  valids = list(train = dtrain, test = dtest),
+  early_stopping_rounds = 10,
+  record = TRUE
+)
+```
+
+# Ejemplo: cálculo del gini
+
+El índice de Gini es una métrica de performance para modelos de clasificación binaria que mide qué tan bien separa el modelo las clases.
+
+El índice de Gini se calcula a partir del AUC de la curva ROC:
+
+$$
+Gini = 2 \times AUC - 1
+$$
+
+```{r gini, fig.align='center'}
+# Cálculo de ginis
+auc_train <- model$record_evals$train$auc$eval
+auc_test <- model$record_evals$test$auc$eval
+gini_train <- 2 * unlist(auc_train) - 1
+gini_test <- 2 * unlist(auc_test) - 1
+
+# Data frame con los ginis
+gini_df <- data.frame(
+  iter = seq_along(gini_train),
+  train = gini_train,
+  test = gini_test
+)
+
+# Gráfico de ginis
+ggplot(gini_df, aes(x = iter)) +
+  ylim(0.5, 1) +
+  geom_line(aes(y = train, color = "Train"), size = 1.2) +
+  geom_line(aes(y = test, color = "Test"), size = 1.2) +
+  scale_color_manual(values = c("Train" = "#1f77b4", "Test" = "#ff7f0e")) +
+  labs(
+    title = "Evolucion del Gini por ronda",
+    x = "Iteracion",
+    y = "Gini",
+    color = "Conjunto"
+  )+
+  theme_minimal() + 
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+# Ejemplo: curva ROC
+
+La curva ROC (Receiver Operating Characteristic) muestra la capacidad de un modelo binario para distinguir entre clases positivas y negativas.
+
+```{r roc, echo=FALSE}
+div(
+  style = paste(
+    "background: #f9fafb;",
+    "border-left: 6px solid #3b82f6;",  # azul claro
+    "padding: 16px;",
+    "border-radius: 8px;",
+    "font-family: sans-serif;",
+    "margin-top: 20px;",
+    "line-height: 1.6;"
+  ),
+  h3("🔍 ¿Qué representa la curva ROC?"),
+  tags$ul(
+    tags$li(HTML("<strong>Eje Y:</strong> Sensibilidad (True Positive Rate) → ¿Cuántos positivos detectamos correctamente?")),
+    tags$li(HTML("<strong>Eje X:</strong> 1 - Especificidad (False Positive Rate) → ¿Cuántos negativos estamos clasificando mal?")),
+    tags$li(HTML("<strong>Diagonal:</strong> Clasificador aleatorio (sin poder predictivo)")),
+    tags$p(HTML("Cuanto más arriba y a la izquierda, mejor el modelo"))
+  )
+)
+```
+
+
+```{r roc_auc}
+# Cálculo de la curva ROC
+roc_train <- roc(y_train, predict(model, X_train))
+roc_test  <- roc(y_test, predict(model, X_test))
+
+# Data frames con las curvas ROC de train y test
+df_train <- data.frame(
+  tpr = rev(roc_train$sensitivities),
+  fpr = rev(1 - roc_train$specificities),
+  dataset = "Train"
+)
+df_test <- data.frame(
+  tpr = rev(roc_test$sensitivities),
+  fpr = rev(1 - roc_test$specificities),
+  dataset = "Test"
+)
+
+# Unión de data frames
+roc_df <- rbind(df_train, df_test)
+
+# Gráfico AUC ROC
+ggplot(roc_df, aes(x = fpr, y = tpr, color = dataset)) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = c("Train" = "#1f77b4", "Test" = "#ff7f0e")) +
+  geom_abline(linetype = "dashed", color = "gray") +
+  labs(
+    title = "Curva ROC",
+    x = "1 - Especificidad",
+    y = "Sensibilidad"
+  )+
+  theme_minimal() + 
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+# Ejemplo: matriz de confusión
+
+La matriz de confusión muestra cómo se comporta el modelo al predecir. Las celdas diagonales indican predicciones correctas. Nos permite identificar cuántos falsos positivos y falsos negativos hay, lo cual es clave cuando el costo de equivocarse es diferente según el caso.
+
+```{r matriz}
+# Test
+df_conf_matrix_test  <- table(
+    Predicted = predict(model, X_test) |> round(),  
+    Actual = y_test
+  ) |> 
+  as.data.frame() |>
+  mutate(
+    Predicted = factor(Predicted, levels = c("1", "0")),
+    Actual = factor(Actual, levels = c("0", "1")),
+  ) 
+
+# Plot matriz de confusión de Test
+ggplot(df_conf_matrix_test, aes(x = Actual, y = Predicted, fill = Freq)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = Freq), size = 6) +
+  scale_fill_gradient(low = "white", high = "#badb33") +
+  labs(title = "Matriz de confusión", x = "Valor real", y = "Predicción") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+# Ejemplo: métricas de clasificación
+
+Para el cálculo de las métricas es necesario partir de la matriz de confusi+on generada de forma similar a la diapositiva anterior. 
+
+```{r conf_matrix_all}
+# Train
+conf_matrix_train <- table(
+  Actual    = y_train,
+  Predicted = predict(model, X_train) |> round()
+) |> as.matrix()
+
+# Test
+conf_matrix_test <- table(
+  Actual    = y_test,
+  Predicted = predict(model, X_test) |> round()
+) |> as.matrix()
+```
+
+## Accuracy
+
+Mide la proporción de predicciones correctas (positivas y negativas).
+
+$$
+\text{Accuracy} = \frac{TP + TN}{TP + TN + FP + FN}
+$$
+
+```{r accuracy}
+accuracy_train <- sum(diag(conf_matrix_train)) / sum(conf_matrix_train)
+accuracy_test  <- sum(diag(conf_matrix_test))  / sum(conf_matrix_test)
+```
+
+## Precision
+Indica de todos los positivos predichos, cuántos eran realmente positivos.
+
+$$
+\text{Precision} = \frac{TP}{TP + FP}
+$$
+
+```{r precision}
+precision_train <- conf_matrix_train["1","1"] / sum(conf_matrix_train["1",])
+precision_test  <- conf_matrix_test["1","1"]   / sum(conf_matrix_test["1",])
+```
+
+## Recall
+
+Indica de todos los positivos reales, cuántos se detectaron correctamente.
+
+$$
+\text{Recall} = \frac{TP}{TP + FN}
+$$
+
+```{r recall}
+recall_train <- conf_matrix_train["1","1"] / sum(conf_matrix_train[,"1"])
+recall_test  <- conf_matrix_test["1","1"]   / sum(conf_matrix_test[,"1"])
+```
+
+## F1-Score
+
+EIndica un equilibrio entre Precision y Recall. Es su media armónica.
+
+$$
+\text{F1} = 2 \cdot \frac{\text{Precision} \cdot \text{Recall}}{\text{Precision} + \text{Recall}}
+$$
+
+```{r f1_score}
+f1_train <- 2 * precision_train * recall_train / (precision_train + recall_train)
+f1_test  <- 2 * precision_test * recall_test / (precision_test + recall_test)
+```
+
+## Resultados
+
+```{r metrics}
+metrics <- data.frame(
+  Dataset = c("Train", "Test"),
+  Accuracy = c(
+    round(accuracy_train * 100, 2), 
+    round(accuracy_test * 100, 2)
+  ),
+  Precision = c(
+    round(precision_train * 100, 2), 
+    round(precision_test * 100, 2)
+  ),
+  Recall = c(
+    round(recall_train * 100, 2), 
+    round(recall_test * 100, 2)
+  ),
+  F1 = c(
+    round(f1_train, 4), 
+    round(f1_test, 4)
+  )
+)
+```
+
+```{r metrics_table, echo=FALSE}
+library(kableExtra)
+metrics %>%
+  kable(caption = "Métricas de Evaluación", format = "html") %>%
+  kable_styling(position = "center", full_width = FALSE) %>%
+  row_spec(0, bold = TRUE)
+```
+
+# Ejemplo: feature importance
+
+El feature importance de lightgbm muestra 3 columnas:
+
+- Gain: medida del incremento en la función objetivo cuando la variable se usa para hacer un split en los árboles. En términos simples, indica cuánto ayuda esa variable a mejorar el modelo.
+
+- Cover: representa la proporción de observaciones que caen en nodos donde la variable se usó para dividir. Es decir, cuánto “cubre” esa variable en el dataset durante el entrenamiento.
+
+- Frequency: indica el número relativo de veces que esa variable fue utilizada para dividir (split) en todos los árboles del modelo. Más frecuencia indica que el modelo recurrió más a esa variable para hacer predicciones.
+
+```{r feature_importance}
+lgb.importance(model)
+```
+
+LightGBM también permite realizar un gráfico del feature importance.
+
+```{r plot_fi}
+lgb.importance(model) |> 
+  lgb.plot.importance(top_n = 20)
+```
