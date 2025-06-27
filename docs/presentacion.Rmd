@@ -572,30 +572,75 @@ Es el parámetro más importante de todos. Le dice a LightGBM qué tipo de probl
 
 #### 🎓 Tipos de `objective` más comunes
 
-| Tipo de problema                            | Valor de `objective` | ¿Qué hace internamente? |
-| ------------------------------------------- | -------------------- | ----------------------------------------- |
-| **Regresión** (valores continuos)           | `"regression"`       | Minimiza el error cuadrático medio (MSE) |
-| **Clasificación binaria** (0/1)             | `"binary"`           | Minimiza la pérdida logarítmica |
-| **Clasificación múltiple** (3 o más clases) | `"multiclass"`       | Usa softmax y logloss para varias clases |
-| **Regresión con outliers**                  | `"huber"`            | Usa función Huber para menos |
-| **Ranking** (ordenar ítems)                 | `"lambdarank"`       | Optimiza una función de ranking |
+```{r objective_table, echo=FALSE}
+df <- data.frame(
+  Ventaja = c("**Regresión**", "**Clasificación binaria**", "**Clasificación múltiple** (3 o más clases)", "**Regresión con outliers**", "**Ranking** (ordenar ítems) "),
+  Descripción = c(
+    '`"regression"`', '`"binary"`', '`"multiclass"`', '`"huber"`', '`"lambdarank"`'
+  ), 
+  Funcion = c("Minimiza el error cuadrático medio (MSE)", "Minimiza la pérdida logarítmica", "Usa softmax y logloss para varias clases", "Usa función Huber para menos", "Optimiza una función de ranking")
+)
+
+# Cambiar nombres de columnas
+colnames(df) <- c("Tipo de problema", "Valor de `objective`", "¿Qué hace internamente?")
+
+kable(df) |>
+  kable_styling(
+    full_width = FALSE, 
+    position = "center",
+    bootstrap_options = c("striped", "hover", "condensed", "responsive")
+  ) |>
+  row_spec(
+    0, 
+    align="center",
+    bold = TRUE, 
+    background = "#D9EAF7",
+    extra_css = "vertical-align: middle;"
+  ) |> # Cabecera destacada
+  kableExtra::column_spec(1, width = "25%", extra_css = "vertical-align: middle;") |>
+  kableExtra::column_spec(2, width = "20%", extra_css = "vertical-align: middle;") |>
+  kableExtra::column_spec(3, width = "55%", extra_css = "vertical-align: middle;") |>
+  scroll_box(width = "75%", box_css = "border: none; padding: 0; margin: 0 auto;")
+```
 
 ### 2. `metric`
 
 Define cómo se mide el desempeño del modelo durante el entrenamiento. Se puede usar una o varias métricas a la vez, y se muestran en cada iteración si `verbose > 0`
 
-#### 🎓 Métricas más comunes por tipo de problema
+**🎓 Métricas más comunes por tipo de problema:**
 
-##### 🔢 Regresión (`objective = "regression"`)
+#### 🔢 Regresión (`objective = "regression"`)
 
-| `metric`  | ¿Qué mide?                              |
-| --------- | --------------------------------------- |
-| `"l2"`    | Error cuadrático medio (MSE)            |
-| `"rmse"`  | Raíz del error cuadrático medio         |
-| `"mae"`   | Error absoluto medio                    |
-| `"huber"` | Error Huber (menos sensible a outliers) |
+```{r regresion_table, echo=FALSE}
+df <- data.frame(
+  Ventaja = c('`"l2"`', '`"rmse"`', '`"mae"`', '`"huber"`'),
+  Descripción = c(
+    'Error cuadrático medio (MSE)', 'Raíz del error cuadrático medio', 'Error absoluto medio', 'Error Huber (menos sensible a outliers)'
+  )
+)
 
-##### ✅ Clasificación binaria (`objective = "binary"`)
+# Cambiar nombres de columnas
+colnames(df) <- c("`metric`", "¿Qué mide?")
+
+kable(df) |>
+  kable_styling(
+    full_width = FALSE, 
+    position = "center",
+    bootstrap_options = c("striped", "hover", "condensed", "responsive")
+  ) |>
+  row_spec(
+    0, 
+    align="center",
+    bold = TRUE, 
+    background = "#D9EAF7",
+    extra_css = "vertical-align: middle;"
+  ) |> # Cabecera destacada
+  kableExtra::column_spec(1, width = "20%", extra_css = "vertical-align: middle;") |>
+  kableExtra::column_spec(2, width = "80%", extra_css = "vertical-align: middle;") |>
+  scroll_box(width = "60%", box_css = "border: none; padding: 0; margin: 0 auto;")
+```
+
+#### ✅ Clasificación binaria (`objective = "binary"`)
 
 | `metric`           | ¿Qué mide?                                                      |
 | ------------------ | --------------------------------------------------------------- |
@@ -603,7 +648,7 @@ Define cómo se mide el desempeño del modelo durante el entrenamiento. Se puede
 | `"auc"`            | Área bajo la curva ROC                                          |
 | `"binary_error"`   | Tasa de error (0/1 mal clasificados)                            |
 
-##### 🎯 Clasificación multiclase (objective = "multiclass")
+#### 🎯 Clasificación multiclase (objective = "multiclass")
 
 | `metric`          | ¿Qué mide?                                |
 | ----------------- | ----------------------------------------- |
