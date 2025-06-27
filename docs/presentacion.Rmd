@@ -15,12 +15,15 @@ output:
 ```{r setup, include=FALSE}
 library(htmltools)
 library(DiagrammeR)
+library(knitr)
+library(kableExtra)
 library(DT)
 knitr::opts_chunk$set(
   echo = TRUE, 
   message = FALSE, 
   warning = FALSE,
-  fig.align='center'
+  fig.align='center', 
+  out.width='90%'
 )
 ```
 
@@ -47,19 +50,17 @@ LightGBM es un framework de *gradient boosting* que utiliza algoritmos de aprend
 
 ## ¿Quién creó LightGBM?
 
-<div style="display: flex; align-items: center; gap: 1rem;">
-  <img src="https://upload.wikimedia.org/wikipedia/commons/9/96/Microsoft_logo_%282012%29.svg" 
-       alt="Microsoft Logo" 
-       style="height: 50px; margin-bottom: 0;" />
-
-<div>
-  <p style="margin: 0;">
-    Desarrollado por <strong>Microsoft Research Asia</strong>  
-    como parte del toolkit <strong>DMTK</strong> (*Distributed Machine Learning Toolkit*).
-  </p>
-  <p style="margin: 0;">
-    Lanzado en <strong>2016</strong> como proyecto <em>open source</em>.
-  </p>
+<div style="display: flex; align-items: center; gap: 1rem; padding-left: 1rem; padding-right: 1rem;">
+<img src="https://upload.wikimedia.org/wikipedia/commons/9/96/Microsoft_logo_%282012%29.svg" 
+     alt="Microsoft Logo" 
+     style="max-width: 25%; min-width: 100px; height: auto; margin-bottom: 0; flex-shrink: 0;" />
+ <div>
+<p style="margin: 0;">
+Desarrollado por <strong>Microsoft Research Asia</strong> como parte del toolkit <strong>DMTK</strong> (*Distributed Machine Learning Toolkit*).
+</p>
+<p style="margin: 0;">
+Lanzado en <strong>2016</strong> como proyecto <em>open source</em>.
+</p>
 </div>
 </div>
 
@@ -126,7 +127,7 @@ tags$div(
 🔄 El proceso se repite muchas veces, agregando un árbol nuevo en cada paso, hasta que se alcanza el número máximo de rondas (nrounds) o se activa un criterio de parada temprana (early_stopping_rounds) si el rendimiento en el conjunto de validación deja de mejorar.
 
 <center>
-  <img src="https://media.geeksforgeeks.org/wp-content/uploads/20250519125344578128/python.webp" width="800" />
+  <img src="https://media.geeksforgeeks.org/wp-content/uploads/20250519125344578128/python.webp" style="max-width: 80%; height: auto;" />
 </center>
 
 Estos pasos se pueden expresar de manera matemática de manera facil
@@ -247,9 +248,9 @@ ventajas_style <- "
 "
 
 tags$div(
-  style = "display: flex; justify-content: center; gap: 40px; margin-top: 20px;",
+  style = "display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; margin-top: 20px;",
 
-  tags$div(
+    tags$div(
     style = ventajas_style,
     onmouseover = sprintf("this.style.transform='scale(1.1)'"),
     onmouseout = sprintf("this.style.transform='scale(1)'"),
@@ -291,15 +292,33 @@ tags$div(
 )
 ```
 
-<div style="margin: 0 auto; width: fit-content;">
-| Ventaja       | Descripción                                                                 |
-|---------------|------------------------------------------------------------------------------|
-| Velocidad   | Entrena modelos rápidamente, lo que lo hace ideal para proyectos con grandes volúmenes de datos |
-| Memoria     | Optimiza el consumo de memoria, permitiendo trabajar con datasets grandes sin requerir tanta RAM         |
-| Precisión   | Proporciona resultados precisos y competitivos en tareas de predicción                    |
-|  Paralelismo | Aprovecha múltiples núcleos, clústeres y aceleración por GPU para entrenamientos más rápidos            |
-| Escalabilidad | Maneja grandes volúmenes de datos sin pérdida de rendimiento       |
-</div>
+```{r ventajas_table, echo=FALSE}
+df <- data.frame(
+  Ventaja = c("Velocidad", "Memoria", "Precisión", "Paralelismo", "Escalabilidad"),
+  Descripción = c(
+    "Entrena modelos rápidamente, lo que lo hace ideal para proyectos con grandes volúmenes de datos",
+    "Optimiza el consumo de memoria, permitiendo trabajar con datasets grandes sin requerir tanta RAM",
+    "Proporciona resultados precisos y competitivos en tareas de predicción",
+    "Aprovecha múltiples núcleos, clústeres y aceleración por GPU para entrenamientos más rápidos",
+    "Maneja grandes volúmenes de datos sin pérdida de rendimiento"
+  )
+)
+
+kable(df) |>
+  kable_styling(
+    full_width = FALSE, 
+    position = "center",
+    bootstrap_options = c("striped", "hover", "condensed", "responsive")
+  ) |>
+  row_spec(
+    0, 
+    align="center",
+    bold = TRUE, 
+    background = "#D9EAF7",
+  ) |> # Cabecera destacada
+  kableExtra::column_spec(1, extra_css = "vertical-align: middle;") |>
+  scroll_box(width = "85%", box_css = "border: none; padding: 0; margin: 0 auto;")
+```
 
 ## Desventajas
 
@@ -357,17 +376,33 @@ tags$div(
 )
 ```
 
-<div style="margin: 0 auto; width: fit-content;">
-| ⚠️ Desventaja                | 📝 Descripción                                                                 |
-|-----------------------------|--------------------------------------------------------------------------------|
-| Overfitting                 | Al ser muy poderoso, puede memorizar ruido si no se ajusta correctamente.      |
-| Difícil de interpretar      | Es una "caja negra" frente a modelos más simples como regresión lineal.        |
-| Problemas en datasets pequeños | Modelos simples pueden generalizar mejor en conjuntos de datos chicos.          |
-| Curva de aprendizaje        | Muchos hiperparámetros que requieren experiencia para ajustar bien.            |
-| Soporte parcial en entornos | APIs disponibles, pero algunas integraciones pueden ser limitadas o inestables. |
-</div>
+```{r desventajas_table, echo=FALSE}
+df <- data.frame(
+  Ventaja = c("Overfitting", "Difícil de interpretar", "Problemas en datasets pequeños", "Curva de aprendizaje", "Soporte parcial en entornos"),
+  Descripción = c(
+    "Al ser muy poderoso, puede memorizar ruido si no se ajusta correctamente",
+    'Es una "caja negra" frente a modelos más simples como regresión lineal',
+    "Modelos simples pueden generalizar mejor en conjuntos de datos chicos",
+    "Muchos hiperparámetros que requieren experiencia para ajustar bien",
+    "APIs disponibles, pero algunas integraciones pueden ser limitadas o inestables"
+  )
+)
 
-
+kable(df) |>
+  kable_styling(
+    full_width = FALSE, 
+    position = "center",
+    bootstrap_options = c("striped", "hover", "condensed", "responsive")
+  ) |>
+  row_spec(
+    0, 
+    align="center",
+    bold = TRUE, 
+    background = "#D9EAF7",
+  ) |> # Cabecera destacada
+  kableExtra::column_spec(1, extra_css = "vertical-align: middle;") |>
+  scroll_box(width = "85%", box_css = "border: none; padding: 0; margin: 0 auto;")
+```
 
 # ¿Para qué utilizar LightGBM?
 
@@ -1628,9 +1663,9 @@ metrics <- data.frame(
 
 ```{r metrics_table, echo=FALSE}
 library(kableExtra)
-metrics %>%
-  kable(caption = "Métricas de Evaluación", format = "html") %>%
-  kable_styling(position = "center", full_width = FALSE) %>%
+metrics |>
+  kable(caption = "Métricas de Evaluación", format = "html") |>
+  kable_styling(position = "center", full_width = FALSE) |>
   row_spec(0, bold = TRUE)
 ```
 
