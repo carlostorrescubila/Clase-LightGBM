@@ -600,7 +600,7 @@ kable(df) |>
   kableExtra::column_spec(1, width = "25%", extra_css = "vertical-align: middle;") |>
   kableExtra::column_spec(2, width = "20%", extra_css = "vertical-align: middle;") |>
   kableExtra::column_spec(3, width = "55%", extra_css = "vertical-align: middle;") |>
-  scroll_box(width = "75%", box_css = "border: none; padding: 0; margin: 0 auto;")
+  scroll_box(width = "70%", box_css = "border: none; padding: 0; margin: 0 auto;")
 ```
 
 ### 2. `metric`
@@ -642,18 +642,65 @@ kable(df) |>
 
 #### ✅ Clasificación binaria (`objective = "binary"`)
 
-| `metric`           | ¿Qué mide?                                                      |
-| ------------------ | --------------------------------------------------------------- |
-| `"binary_logloss"` | Pérdida logarítmica (predicciones vs probabilidades verdaderas) |
-| `"auc"`            | Área bajo la curva ROC                                          |
-| `"binary_error"`   | Tasa de error (0/1 mal clasificados)                            |
+```{r clasification_table, echo=FALSE}
+df <- data.frame(
+  Ventaja = c('`"binary_logloss"`', '`"auc"`', '`"binary_error"`'),
+  Descripción = c(
+    'Pérdida logarítmica (predicciones vs probabilidades verdaderas)', 'Área bajo la curva ROC', 'Tasa de error (0/1 mal clasificados)'
+  )
+)
+
+# Cambiar nombres de columnas
+colnames(df) <- c("`metric`", "¿Qué mide?")
+
+kable(df) |>
+  kable_styling(
+    full_width = FALSE, 
+    position = "center",
+    bootstrap_options = c("striped", "hover", "condensed", "responsive")
+  ) |>
+  row_spec(
+    0, 
+    align="center",
+    bold = TRUE, 
+    background = "#D9EAF7",
+    extra_css = "vertical-align: middle;"
+  ) |> # Cabecera destacada
+  kableExtra::column_spec(1, width = "20%", extra_css = "vertical-align: middle;") |>
+  kableExtra::column_spec(2, width = "80%", extra_css = "vertical-align: middle;") |>
+  scroll_box(width = "60%", box_css = "border: none; padding: 0; margin: 0 auto;")
+```
 
 #### 🎯 Clasificación multiclase (objective = "multiclass")
 
-| `metric`          | ¿Qué mide?                                |
-| ----------------- | ----------------------------------------- |
-| `"multi_logloss"` | Pérdida logarítmica para múltiples clases |
-| `"multi_error"`   | Porcentaje de predicciones incorrectas    |
+```{r multiclass_table, echo=FALSE}
+df <- data.frame(
+  Ventaja = c('`"multi_logloss"`', '`"multi_error"`'),
+  Descripción = c(
+    'Pérdida logarítmica para múltiples clases', 'Porcentaje de predicciones incorrectas'
+  )
+)
+
+# Cambiar nombres de columnas
+colnames(df) <- c("`metric`", "¿Qué mide?")
+
+kable(df) |>
+  kable_styling(
+    full_width = FALSE, 
+    position = "center",
+    bootstrap_options = c("striped", "hover", "condensed", "responsive")
+  ) |>
+  row_spec(
+    0, 
+    align="center",
+    bold = TRUE, 
+    background = "#D9EAF7",
+    extra_css = "vertical-align: middle;"
+  ) |> # Cabecera destacada
+  kableExtra::column_spec(1, width = "20%", extra_css = "vertical-align: middle;") |>
+  kableExtra::column_spec(2, width = "80%", extra_css = "vertical-align: middle;") |>
+  scroll_box(width = "55%", box_css = "border: none; padding: 0; margin: 0 auto;")
+```
 
 ### 3. `boosting`
 
@@ -675,6 +722,15 @@ step_style <- "
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 "
 
+hover_css <- "
+<style>
+.step:hover {
+  transform: scale(1.05);
+  box-shadow: 6px 8px 18px rgba(0,0,0,0.12);
+}
+</style>
+"
+
 icon_style <- function(bg, color = "black") {
   paste0(
     "font-size: 32px; background:", bg,
@@ -684,51 +740,78 @@ icon_style <- function(bg, color = "black") {
 
 steps <- tagList(
   tags$div(
+    class = "step",
     style = step_style,
     tags$div(style = icon_style("#fee2e2", "#dc2626"), "⏱️"),
     tags$strong(style = "text-align: center;", "Velocidad de entrenamiento")
   ),
   tags$div(
+    class = "step",
     style = step_style,
     tags$div(style = icon_style("#e0f2fe", "#2563eb"), "🧠"),
     tags$strong(style = "text-align: center;", "Precisión del modelo")
   ),
   tags$div(
+    class = "step",
     style = step_style,
     tags$div(style = icon_style("#ecfccb", "#65a30d"), "💾"),
     tags$strong(style = "text-align: center;", "Consumo de memoria")
   ),
   tags$div(
+    class = "step",
     style = step_style,
     tags$div(style = icon_style("#fae8ff", "#a21caf"), "🔥"),
     tags$strong(style = "text-align: center;", "Robustez al overfitting")
   )
 )
 
-tags$div(
-  style = "
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 24px;
-    margin-top: 20px;
-    font-family: 'Segoe UI', sans-serif;
-    font-size: 16px;
-  ",
-  steps
+tagList(
+  HTML(hover_css),
+  tags$div(
+    style = "
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 24px;
+      margin-top: 20px;
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 16px;
+    ",
+    steps
+  )
 )
-
 ```
 
 LightGBM permite seleccionar entre 4 métodos de boosting
 
-| Valor    | ¿Qué hace?                                                                   | ¿Cuándo usarlo?                              |
-| -------- | ---------------------------------------------------------------------------- | -------------------------------------------- |
-| `"gbdt"` | **Gradient Boosted Decision Trees** (por defecto)                            | ✔️ Preciso, funciona bien en casi todo       |
-| `"dart"` | Como GBDT, pero **descarta algunos árboles al azar**                         | ✔️ Bueno para evitar overfitting             |
-| `"goss"` | **Gradient-based One-Side Sampling**: se entrena con un subconjunto de datos | ✔️ Más rápido, útil con muchos datos         |
-| `"rf"`   | **Random Forest**: como método de bagging, no es boosting puro               | 🔁 Solo si necesitas usar árboles aleatorios |
+```{r boosting_table, echo=FALSE}
+df <- data.frame(
+  Ventaja = c('`"gbdt"`', '`"dart"`', '`"goss"`', '`"rf"`'),
+  Descripción = c('**Gradient Boosted Decision Trees** (por defecto)', 'Como GBDT, pero **descarta algunos árboles al azar**', '**Gradient-based One-Side Sampling**: se entrena con un subconjunto de datos' ,'**Random Forest**: como método de bagging, no es boosting puro'), 
+  Funcion = c('✔️ Preciso, funciona bien en casi todo', '✔️ Bueno para evitar overfitting', '✔️ Más rápido, útil con muchos datos', ' Solo si necesitas usar árboles aleatorios')
+)
 
+# Cambiar nombres de columnas
+colnames(df) <- c("Valor", "¿Qué hace?", "¿Cuándo usarlo?")
+
+kable(df) |>
+  kable_styling(
+    full_width = FALSE, 
+    position = "center",
+    bootstrap_options = c("striped", "hover", "condensed", "responsive")
+  ) |>
+  row_spec(
+    0, 
+    align="center",
+    bold = TRUE, 
+    background = "#D9EAF7",
+    extra_css = "vertical-align: middle;"
+  ) |> # Cabecera destacada
+  kableExtra::column_spec(1, width = "10%", extra_css = "vertical-align: middle;") |>
+  kableExtra::column_spec(2, width = "50%", extra_css = "vertical-align: middle;") |>
+  kableExtra::column_spec(3, width = "40%", extra_css = "vertical-align: middle;") |>
+  scroll_box(width = "75%", box_css = "border: none; padding: 0; margin: 0 auto;")
+```
 
 ### 4. `verbosity`
 
@@ -740,66 +823,85 @@ card_style <- "
   flex-direction: column;
   align-items: center;
   width: 180px;
+  min-height: 180px;
   padding: 16px;
   border-radius: 16px;
   background: white;
-  border: 2px solid #e5e7eb;
+  border: 1px solid #e5e7eb;
   box-shadow: 3px 4px 12px rgba(0,0,0,0.06);
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 "
 
 icon_style <- function(bg, color = "black") {
   paste0(
     "font-size: 30px; background:", bg,
     "; color:", color,
-    "; padding: 10px; border-radius: 50%; margin-bottom: 10px;"
+    "; padding: 12px; border-radius: 50%; margin-bottom: 10px;"
   )
 }
 
+hover_css <- "
+<style>
+.card:hover {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 6px 8px 18px rgba(0,0,0,0.1);
+  border-color: #cbd5e1;
+}
+</style>
+"
+
 verbosity_cards <- tagList(
   tags$div(
+    class = "card",
     style = card_style,
     tags$div(style = icon_style("#f3f4f6", "#374151"), "🔇"),
     tags$strong("-1"),
-    tags$p("No imprime nada. Entrenamiento silencioso.")
+    tags$p(style = "text-align: center; margin: 0;", "No imprime nada. Entrenamiento silencioso.")
   ),
   tags$div(
+    class = "card",
     style = card_style,
     tags$div(style = icon_style("#fef3c7", "#92400e"), "⚠️"),
     tags$strong("0"),
-    tags$p("Solo muestra errores graves.")
+    tags$p(style = "text-align: center; margin: 0;", "Solo muestra errores graves.")
   ),
   tags$div(
+    class = "card",
     style = card_style,
     tags$div(style = icon_style("#e0f2fe", "#1e40af"), "ℹ️"),
     tags$strong("1"),
-    tags$p("Errores y advertencias (warnings).")
+    tags$p(style = "text-align: center; margin: 0;", "Errores y advertencias (warnings).")
   ),
   tags$div(
+    class = "card",
     style = card_style,
     tags$div(style = icon_style("#d1fae5", "#047857"), "🔍"),
     tags$strong("2"),
-    tags$p("Muestra información del progreso del entrenamiento.")
+    tags$p(style = "text-align: center; margin: 0;", "Muestra información del progreso del entrenamiento.")
   ),
   tags$div(
+    class = "card",
     style = card_style,
     tags$div(style = icon_style("#ede9fe", "#6b21a8"), "🧠"),
     tags$strong("3+"),
-    tags$p("Modo detallado. Útil para debugging profundo.")
+    tags$p(style = "text-align: center; margin: 0;", "Modo detallado. Útil para debugging profundo.")
   )
 )
 
-tags$div(
-  style = "
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 20px;
-    margin-top: 20px;
-    font-family: 'Segoe UI', sans-serif;
-    font-size: 15px;
-  ",
-  verbosity_cards
+tagList(
+  HTML(hover_css),
+  tags$div(
+    style = "
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-top: 20px;
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 15px;
+    ",
+    verbosity_cards
+  )
 )
 ```
 
@@ -811,12 +913,32 @@ tags$div(
 
 Determina cuántas hojas (leaves) puede tener cada árbol de decisión que construye LightGBM. Una hoja es donde termina una decisión, y contiene la predicción final para una parte del dataset. Mientras más hojas, más complejo y flexible puede ser el árbol.
 
-| Situación                    | Valor sugerido      |
-| ---------------------------- | ------------------- |
-| Dataset pequeño              | 15–31 hojas         |
-| Dataset grande               | 64–255 hojas        |
-| Muchas variables categóricas | Menos hojas mejor   |
-| Cuando hay overfitting       | Reduce `num_leaves` |
+```{r num_leaves_table, echo=FALSE}
+df <- data.frame(
+  Dataset = c('Dataset pequeño', 'Dataset grande', 'Muchas variables categóricas', 'Cuando hay overfitting'),
+  Descripción = c('15–31 hojas', '64–255 hojas', 'Menos hojas, mejor', 'Reduce `num_leaves`')
+)
+
+# Cambiar nombres de columnas
+colnames(df) <- c("Situación", "Valor sugerido")
+
+kable(df) |>
+  kable_styling(
+    full_width = FALSE, 
+    position = "center",
+    bootstrap_options = c("striped", "hover", "condensed", "responsive")
+  ) |>
+  row_spec(
+    0, 
+    align="center",
+    bold = TRUE, 
+    background = "#D9EAF7",
+    extra_css = "vertical-align: middle;"
+  ) |> # Cabecera destacada
+  kableExtra::column_spec(1, width = "55%", extra_css = "vertical-align: middle;") |>
+  kableExtra::column_spec(2, width = "45%", extra_css = "vertical-align: middle;") |>
+  scroll_box(width = "47%", box_css = "border: none; padding: 0; margin: 0 auto;")
+```
 
 ```{r num_leaves, echo=FALSE}
 div(
@@ -830,7 +952,7 @@ div(
 
 Controla cuántos niveles de decisiones puede tener un árbol individual. Si se reduce, se evita que los árboles se vuelvan demasiado complejos. Un valor de -1, LightGBM decide por su cuenta (crece hasta donde haga falta).
 
-```{r, echo=FALSE}
+```{r max_depth, echo=FALSE}
 library(DiagrammeR)
 library(htmltools)
 
@@ -919,12 +1041,32 @@ Indica la mínima cantidad de observaciones (filas) que debe tener cada hoja en 
 
 #### ⚖️ Recomendaciones prácticas
 
-| Dataset                 | Valor sugerido |
-| ----------------------- | -------------- |
-| Pequeño (<10,000 filas) | 10–50          |
-| Mediano                 | 100–500        |
-| Grande                  | 500–1000 o más |
+```{r min_data_in_leaf_table, echo=FALSE}
+df <- data.frame(
+  Ventaja = c('Pequeño (<10,000 filas)', 'Mediano', 'Grande'),
+  Descripción = c('10–50 ', '100–500', '500 o más')
+)
 
+# Cambiar nombres de columnas
+colnames(df) <- c("Dataset", "Valor sugerido")
+
+kable(df) |>
+  kable_styling(
+    full_width = FALSE, 
+    position = "center",
+    bootstrap_options = c("striped", "hover", "condensed", "responsive")
+  ) |>
+  row_spec(
+    0, 
+    align="center",
+    bold = TRUE, 
+    background = "#D9EAF7",
+    extra_css = "vertical-align: middle;"
+  ) |> # Cabecera destacada
+  kableExtra::column_spec(1, width = "60%", extra_css = "vertical-align: middle;") |>
+  kableExtra::column_spec(2, width = "40%", extra_css = "vertical-align: middle;") |>
+  scroll_box(width = "40%", box_css = "border: none; padding: 0; margin: 0 auto;")
+```
 
 # Parámetros de LightGBM (III)
 
@@ -936,11 +1078,32 @@ Define cuánto se ajusta el modelo en cada iteración (árbol). Si el `learning_
 
 #### 📊 Efecto según el valor
 
-| `learning_rate`    | Qué pasa                                               |
-| ------------------ | ------------------------------------------------------ |
-| Alto (`≥ 0.2`)     | Aprende rápido, pero puede sobreajustar o divergir     |
-| Medio (`0.05–0.1`) | Equilibrio entre velocidad y precisión                 |
-| Bajo (`< 0.05`)    | Aprende lento pero con mayor control y precisión final |
+```{r learning_rate_table, echo=FALSE}
+df <- data.frame(
+  Dataset = c('Alto (`≥ 0.2`)', 'Medio (`0.05–0.1`)', 'Bajo (`<0.05`)'),
+  Descripcion = c('Aprende rápido, pero puede sobreajustar o divergir', 'Equilibrio entre velocidad y precisión', 'Aprende lento pero con mayor control y precisión final')
+)
+
+# Cambiar nombres de columnas
+colnames(df) <- c("`learning_rate`", "¿Qué pasa?")
+
+kable(df) |>
+  kable_styling(
+    full_width = FALSE, 
+    position = "center",
+    bootstrap_options = c("striped", "hover", "condensed", "responsive")
+  ) |>
+  row_spec(
+    0, 
+    align="center",
+    bold = TRUE, 
+    background = "#D9EAF7",
+    extra_css = "vertical-align: middle;"
+  ) |> # Cabecera destacada
+  kableExtra::column_spec(1, width = "30%", extra_css = "vertical-align: middle;") |>
+  kableExtra::column_spec(2, width = "70%", extra_css = "vertical-align: middle;") |>
+  scroll_box(width = "65%", box_css = "border: none; padding: 0; margin: 0 auto;")
+```
 
 ```{r learning_rate, echo=FALSE}
 div(
@@ -965,11 +1128,31 @@ Define cuántos árboles se van a construir durante el entrenamiento. Este pará
 
 #### 🧪 Recomendación práctica
 
-| `learning_rate` | `nrounds` sugerido |
-| --------------- | ------------------ |
-| `0.1`           | 100–500            |
-| `0.05`          | 500–1000           |
-| `0.01`          | 1000–3000          |
+```{r nrounds_table, echo=FALSE}
+df <- data.frame(
+  Dataset = c('`0.1`', '`0.05`', '`0.01`'),
+  Descripcion = c('100–500', '500–1000', '1000–3000')
+)
+
+# Cambiar nombres de columnas
+colnames(df) <- c("`learning_rate`", "`nrounds` sugerido")
+
+kable(df) |>
+  kable_styling(
+    full_width = FALSE, 
+    position = "center",
+    bootstrap_options = c("striped", "hover", "condensed", "responsive")
+  ) |>
+  row_spec(
+    0, 
+    align="center",
+    bold = TRUE, 
+    background = "#D9EAF7",
+  ) |> # Cabecera destacada
+  kableExtra::column_spec(1, width = "30%") |>
+  kableExtra::column_spec(2, width = "70%") |>
+  scroll_box(width = "35%", box_css = "border: none; padding: 0; margin: 0 auto;")
+```
 
 ```{r nrounds, echo=FALSE}
 div(
