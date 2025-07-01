@@ -22,8 +22,9 @@ knitr::opts_chunk$set(
   echo = TRUE, 
   message = FALSE, 
   warning = FALSE,
-  fig.align='center', 
-  out.width='90%'
+  fig.align='center',
+  out.width='75%',
+  out.extra = 'style="max-width: 800px; display: block; margin-left: auto; margin-right: auto;"'
 )
 ```
 
@@ -1782,6 +1783,17 @@ ggplot(roc_df, aes(x = fpr, y = tpr, color = dataset)) +
 
 La matriz de confusión muestra cómo se comporta el modelo al predecir. Las celdas diagonales indican predicciones correctas. Nos permite identificar cuántos falsos positivos y falsos negativos hay, lo cual es clave cuando el costo de equivocarse es diferente según el caso.
 
+$$
+\begin{array}{c|c|c}
+\textbf{Observación} \backslash \textbf{Predicción} & \textbf{Positivos} & \textbf{Negativos} \\
+\hline
+\textbf{Positivos} & \begin{array}{c}\text{Verdaderos}\\ \text{Positivos (TP)}\end{array} 
+                  & \begin{array}{c}\text{Falsos}\\ \text{Negativos (FN)}\end{array} \\
+\hline
+\textbf{Negativos} & \begin{array}{c}\text{Falsos}\\ \text{Positivos (FP)}\end{array}
+                  & \begin{array}{c}\text{Verdaderos}\\ \text{Negativos (TN)}\end{array}
+\end{array}
+$$
 ```{r matriz}
 # Test
 df_conf_matrix_test  <- table(
@@ -1821,6 +1833,21 @@ conf_matrix_test <- table(
   Predicted = predict(model, X_test) |> round()
 ) |> as.matrix()
 ```
+
+Ambas tablas tienen el siguiente formato: 
+
+$$
+\begin{array}{c|c|c}
+\textbf{Observación} \backslash \textbf{Predicción} & \textbf{Positivos} & \textbf{Negativos} \\
+\hline
+\textbf{Positivos} & \begin{array}{c}\text{Verdaderos}\\ \text{Positivos (TP)}\end{array} 
+                  & \begin{array}{c}\text{Falsos}\\ \text{Negativos (FN)}\end{array} \\
+\hline
+\textbf{Negativos} & \begin{array}{c}\text{Falsos}\\ \text{Positivos (FP)}\end{array}
+                  & \begin{array}{c}\text{Verdaderos}\\ \text{Negativos (TN)}\end{array}
+\end{array}
+$$
+
 
 ## Accuracy
 
